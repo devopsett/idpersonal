@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PocketVault • Offline & Online</title>
+  <title>PocketVault Pro • Offline & Cloud Sync</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#030712">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -72,7 +72,6 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Live Network Detector Badge */
     .net-badge {
       display: inline-flex;
       align-items: center;
@@ -424,7 +423,6 @@
         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Offline & Cloud Sync Hub</div>
       </div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <!-- Penunjuk Live Status Network -->
         <span id="networkStatusBadge" class="net-badge net-online">
           <span id="networkDot" class="pulse-dot pulse-online"></span>
           <span id="networkText">Online</span>
@@ -441,7 +439,7 @@
           <div class="stat-value" id="totalDocsCounter">0</div>
         </div>
         <div style="text-align: right;">
-          <button class="btn-icon-dock" style="width: auto; padding: 6px 12px; font-size: 0.75rem; border-radius: 8px;" onclick="quickCloudSync()">☁️ Sync Cloud</button>
+          <button class="btn-icon-dock" style="width: auto; padding: 6px 12px; font-size: 0.75rem; border-radius: 8px;" onclick="openModal('cloudModal')">☁️ Sync Cloud</button>
         </div>
       </div>
     </div>
@@ -505,7 +503,7 @@
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Tarikh Luput (Pilihan)</label>
     <input type="date" id="docExpiry">
 
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Pilih Fail (Boleh Pilih Banyak: Imej/PDF)</label>
+    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Pilih Fail (Boleh Pilih Banyak Fail: Imej/PDF)</label>
     <input type="file" id="docFilesInput" accept="image/*,application/pdf" multiple>
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nota Catatan</label>
@@ -523,7 +521,7 @@
       <button onclick="closeModal('cloudModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
     </div>
     <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
-      Salinan data tersulit anda dihantar ke Google Drive peribadi secara selamat tanpa merosakkan akses luar talian (offline).
+      Salinan data tersulit anda dihantar terus ke Google Drive peribadi secara selamat tanpa menjejaskan akses luar talian (offline).
     </p>
 
     <button class="btn-main-action" style="width: 100%; margin-bottom: 0.8rem;" onclick="syncUploadToCloud()">
@@ -544,7 +542,6 @@
       <button onclick="closeModal('settingsModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
     </div>
 
-    <!-- Tukar Password -->
     <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--card-border); margin-bottom: 1.2rem;">
       <h4 style="font-size: 0.95rem; color: var(--accent); margin-bottom: 0.6rem;">🔑 Tukar Master Password</h4>
       <input type="password" id="oldPasswordInput" placeholder="Master Password Semasa">
@@ -572,10 +569,10 @@
 </div>
 
 <script>
-  // -------------------------------------------------------------
+  // =============================================================
   // MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI
-  // -------------------------------------------------------------
-  const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwGsw3pR-C9gZEYrCl8mfyjCSmg3lNHRkMFvRm3eoq-K60jD0LYIxCqwr4Vu9mb8VLXOw/exec"; 
+  // =============================================================
+  const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwGsw3pR-C9gZEYrCl8mfyjCSmg3lNHRkMFvRm3eoq-K60jD0LYIxCqwr4Vu9mb8VLXOw/exec";
 
   let sessionKey = null;
   let decryptedDocs = [];
@@ -587,7 +584,7 @@
   const DB_NAME = 'PocketVaultProDB';
   const STORE_NAME = 'docs_v3';
 
-  // --- Pengesan Status Internet (Online/Offline) ---
+  // --- Network Detector ---
   function updateNetworkStatus() {
     const badge = document.getElementById('networkStatusBadge');
     const dot = document.getElementById('networkDot');
@@ -607,7 +604,7 @@
   window.addEventListener('online', updateNetworkStatus);
   window.addEventListener('offline', updateNetworkStatus);
 
-  // --- IndexedDB Management ---
+  // --- IndexedDB ---
   function openDB() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, 1);
@@ -640,7 +637,7 @@
     });
   }
 
-  // --- Kriptografi (AES-256 GCM) ---
+  // --- Web Crypto (AES-256 GCM) ---
   async function deriveKey(password, salt) {
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
@@ -739,6 +736,17 @@
     try {
       const decryptedStr = await decryptData(raw, pwd);
       decryptedDocs = JSON.parse(decryptedStr);
+      
+      decryptedDocs.forEach(d => {
+        if (!d.files) {
+          d.files = [];
+          if (d.frontFile) d.files.push(d.frontFile);
+          if (d.backFile) d.files.push(d.backFile);
+          delete d.frontFile;
+          delete d.backFile;
+        }
+      });
+
       sessionKey = pwd;
       showApp();
     } catch (err) {
@@ -766,11 +774,11 @@
     checkInitialVaultStatus();
   }
 
-  // --- Cloud Sync Functions (Google Drive Integration) ---
+  // --- Cloud Sync Handlers ---
   async function syncUploadToCloud() {
-    if (!navigator.onLine) return alert("Tiada sambungan internet untuk melakukan Cloud Sync!");
+    if (!navigator.onLine) return alert("Tiada sambungan internet untuk Cloud Sync!");
     if (!GAS_ENDPOINT_URL || GAS_ENDPOINT_URL.includes("URL_GOOGLE_APPS_SCRIPT")) {
-      return alert("Sila masukkan URL Web App Google Apps Script anda di dalam kod.");
+      return alert("Sila masukkan URL Web App Google Apps Script anda yang sah (berakhir dengan /exec).");
     }
 
     const statusEl = document.getElementById('cloudSyncStatus');
@@ -788,11 +796,18 @@
           payload: rawPayload
         })
       });
-      const data = await res.json();
+
+      const textResponse = await res.text();
+      if (textResponse.trim().startsWith("<")) {
+        throw new Error("Kebenaran gagal! Sila pastikan Web App diset kepada 'Anyone' di Google Apps Script.");
+      }
+
+      const data = JSON.parse(textResponse);
       statusEl.innerText = data.message || "Berjaya sync ke Drive!";
       alert(data.message);
     } catch (e) {
-      statusEl.innerText = "Gagal memuat naik: " + e.toString();
+      statusEl.innerText = "Gagal memuat naik: " + e.message;
+      alert("Ralat Sync: " + e.message);
     }
   }
 
@@ -809,7 +824,13 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "fetch_backup" })
       });
-      const data = await res.json();
+
+      const textResponse = await res.text();
+      if (textResponse.trim().startsWith("<")) {
+        throw new Error("Kebenaran gagal! Sila pastikan Web App diset kepada 'Anyone' di Google Apps Script.");
+      }
+
+      const data = JSON.parse(textResponse);
 
       if (data.status === "success") {
         const decryptedStr = await decryptData(data.payload, sessionKey);
@@ -820,14 +841,12 @@
         alert("Pangkalan data berjaya diselaraskan dari Google Drive!");
       } else {
         statusEl.innerText = data.message;
+        alert(data.message);
       }
     } catch (e) {
-      statusEl.innerText = "Gagal: " + e.toString();
+      statusEl.innerText = "Gagal: " + e.message;
+      alert("Ralat: " + e.message);
     }
-  }
-
-  function quickCloudSync() {
-    openModal('cloudModal');
   }
 
   // --- Document Operations ---
@@ -1081,7 +1100,18 @@
   window.addEventListener('DOMContentLoaded', checkInitialVaultStatus);
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              window.location.reload();
+            }
+          };
+        };
+      }).catch(console.error);
+    });
   }
 </script>
 </body>
