@@ -49,7 +49,6 @@
       position: relative;
     }
 
-    /* Glass Effect Utility */
     .glass-box {
       background: var(--card-glass);
       backdrop-filter: blur(24px);
@@ -57,7 +56,6 @@
       border: 1px solid var(--card-border);
     }
 
-    /* Header Nav */
     .top-header {
       display: flex;
       justify-content: space-between;
@@ -95,7 +93,6 @@
       box-shadow: 0 0 8px var(--emerald);
     }
 
-    /* Overview Dashboard Card */
     .hero-stat-card {
       border-radius: var(--radius-xl);
       padding: 1.25rem;
@@ -103,19 +100,6 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .hero-stat-card::after {
-      content: '';
-      position: absolute;
-      top: -30%;
-      right: -20%;
-      width: 140px;
-      height: 140px;
-      background: var(--accent);
-      filter: blur(50px);
-      opacity: 0.15;
-      pointer-events: none;
     }
 
     .stat-flex {
@@ -127,7 +111,6 @@
     .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; }
     .stat-value { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1.1; margin-top: 4px; }
 
-    /* Category Pill Selectors */
     .cat-scroll-container {
       display: flex;
       gap: 8px;
@@ -158,13 +141,11 @@
       box-shadow: 0 4px 14px rgba(255, 255, 255, 0.25);
     }
 
-    /* Modern Document Card */
     .vault-card {
       border-radius: var(--radius-xl);
       padding: 1.25rem;
       margin-bottom: 1.2rem;
       position: relative;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
 
@@ -201,7 +182,6 @@
 
     .doc-main-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; }
 
-    /* Number Bar with Copy */
     .id-number-bar {
       display: flex;
       justify-content: space-between;
@@ -217,7 +197,6 @@
       cursor: pointer;
     }
 
-    /* 3D Flip Card Container */
     .flip-card-viewport {
       perspective: 1000px;
       width: 100%;
@@ -250,7 +229,6 @@
     }
 
     .flip-face-back { transform: rotateY(180deg); }
-
     .flip-img { width: 100%; height: 100%; object-fit: cover; }
 
     .flip-overlay-btn {
@@ -290,7 +268,6 @@
       text-decoration: none;
     }
 
-    /* Fixed Bottom Dock */
     .dock-bar {
       position: fixed;
       bottom: 0;
@@ -343,7 +320,6 @@
       font-size: 1.1rem;
     }
 
-    /* Forms & Modals */
     input, select, textarea {
       width: 100%;
       background: rgba(0, 0, 0, 0.4);
@@ -391,7 +367,6 @@
     }
 
     .modal-overlay.active .modal-sheet-box { transform: translateY(0); }
-
     .hidden { display: none !important; }
   </style>
 </head>
@@ -399,25 +374,34 @@
 
 <div class="app-wrapper">
 
-  <!-- Skrin Kunci & Kata Laluan Utama -->
+  <!-- Skrin Kunci & Setup Awal -->
   <div id="authScreen" style="min-height: 85vh; display: flex; flex-direction: column; justify-content: center;">
     <div class="glass-box" style="border-radius: var(--radius-xl); padding: 2.25rem 1.5rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
       <div style="width: 64px; height: 64px; background: rgba(56,189,248,0.1); border: 1px solid var(--card-border); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem auto; font-size: 2rem;">
         🛡️
       </div>
-      <h1 class="brand-title" style="font-size: 1.6rem; margin-bottom: 0.3rem;">PocketVault Pro</h1>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.4;">
-        Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses selamat.
+      <h1 class="brand-title" id="authTitle" style="font-size: 1.6rem; margin-bottom: 0.3rem;">PocketVault Pro</h1>
+      <p id="authDesc" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.4;">
+        Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses.
       </p>
 
-      <input type="password" id="masterKeyInput" placeholder="Master Password" style="text-align: center; letter-spacing: 0.15em;" autocomplete="current-password">
-      <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="unlockVault()">Buka Vault Dokumen</button>
+      <!-- Borang Log Masuk Biasa -->
+      <div id="loginFormSection">
+        <input type="password" id="masterKeyInput" placeholder="Master Password" style="text-align: center; letter-spacing: 0.15em;" autocomplete="current-password">
+        <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="unlockVault()">Buka Vault</button>
+      </div>
+
+      <!-- Borang First Time Setup -->
+      <div id="setupFormSection" class="hidden">
+        <input type="password" id="newMasterKeyInput" placeholder="Cipta Master Password Baharu" style="text-align: center;">
+        <input type="password" id="confirmMasterKeyInput" placeholder="Sahkan Master Password" style="text-align: center;">
+        <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="setupNewMasterKey()">Tetapkan & Cipta Vault</button>
+      </div>
     </div>
   </div>
 
   <!-- Dashboard Utama -->
   <div id="mainDashboard" class="hidden">
-    <!-- Header -->
     <div class="top-header">
       <div>
         <h1 class="brand-title">PocketVault</h1>
@@ -455,7 +439,6 @@
       <button class="cat-pill" onclick="setCategoryFilter('Lain-lain', this)">Lain-lain</button>
     </div>
 
-    <!-- Senarai Kad Dokumen -->
     <div id="docsList"></div>
   </div>
 
@@ -467,8 +450,8 @@
     <button class="btn-main-action" onclick="openModal('addModal')">
       <span>＋ Tambah Dokumen Baru</span>
     </button>
-    <button class="btn-icon-dock" onclick="openModal('backupModal')" title="Sandaran Data">
-      💾
+    <button class="btn-icon-dock" onclick="openModal('settingsModal')" title="Tetapan & Sandaran">
+      ⚙️
     </button>
   </div>
 </div>
@@ -491,7 +474,7 @@
     </select>
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Label / Tajuk Kad</label>
-    <input type="text" id="docTitle" placeholder="Contoh: MyKad Rasek / Lesen Memandu D & B2">
+    <input type="text" id="docTitle" placeholder="Contoh: MyKad Depan Belakang / Lesen Memandu">
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nombor ID / No. Kad</label>
     <input type="text" id="docIdentifier" placeholder="Contoh: 020216-11-XXXX">
@@ -506,30 +489,40 @@
     <input type="file" id="docBackInput" accept="image/*">
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nota Catatan</label>
-    <textarea id="docNotes" rows="2" placeholder="Catatan seperti kelas lesen, siri dokumen..."></textarea>
+    <textarea id="docNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
 
     <button class="btn-main-action" style="width: 100%; margin-top: 0.5rem;" id="saveBtn" onclick="saveDocument()">Enkrip & Simpan Dokumen</button>
   </div>
 </div>
 
-<!-- Modal Backup -->
-<div id="backupModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'backupModal')">
+<!-- Modal Tetapan, Tukar Password & Sandaran -->
+<div id="settingsModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'settingsModal')">
   <div class="modal-sheet-box">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Pusat Sandaran Offline</h3>
-      <button onclick="closeModal('backupModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Tetapan & Sandaran</h3>
+      <button onclick="closeModal('settingsModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
     </div>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.2rem;">
-      Semua fail dokumen disimpan dalam storan selamat peranti ini sahaja. Muat turun fail sandaran (.json) untuk tujuan keselamatan.
+
+    <!-- Tukar Password Section -->
+    <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--card-border); margin-bottom: 1.2rem;">
+      <h4 style="font-size: 0.95rem; color: var(--accent); margin-bottom: 0.6rem;">🔑 Tukar Master Password</h4>
+      <input type="password" id="oldPasswordInput" placeholder="Master Password Semasa">
+      <input type="password" id="newPasswordChangeInput" placeholder="Master Password Baharu">
+      <input type="password" id="confirmPasswordChangeInput" placeholder="Sahkan Password Baharu">
+      <button class="btn-main-action" style="width: 100%; font-size: 0.85rem; padding: 0.75rem;" onclick="changeMasterPassword()">Kemas Kini Kata Laluan</button>
+    </div>
+
+    <h4 style="font-size: 0.95rem; color: #fff; margin-bottom: 0.5rem;">📁 Sandaran Data (Backup)</h4>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+      Muat turun salinan fail data tersulit (.json) untuk tujuan sandaran.
     </p>
-    
     <button class="btn-main-action" style="width: 100%; margin-bottom: 0.8rem;" onclick="exportVaultBackup()">Muat Turun Fail Sandaran</button>
     <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importVaultBackup(event)">
     <button class="btn-main-action" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); box-shadow: none;" onclick="document.getElementById('importFileInput').click()">Pulihkan Sandaran (Import)</button>
   </div>
 </div>
 
-<!-- Modal Paparan Penuh (Fullscreen Viewer) -->
+<!-- Modal Viewer -->
 <div id="viewModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'viewModal')">
   <div class="modal-sheet-box" style="height: 90vh;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
@@ -545,7 +538,7 @@
   let decryptedDocs = [];
   let currentFilterCategory = 'Semua';
   let inactivityTimer = null;
-  const INACTIVITY_TIMEOUT = 2 * 60 * 1000; // 2 Minit Auto-Lock
+  const INACTIVITY_TIMEOUT = 2 * 60 * 1000;
 
   const DB_NAME = 'PocketVaultProDB';
   const STORE_NAME = 'docs_v3';
@@ -583,7 +576,7 @@
     });
   }
 
-  // --- Kriptografi (AES-GCM 256-bit + PBKDF2) ---
+  // --- Web Crypto (AES-256 GCM) ---
   async function deriveKey(password, salt) {
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
@@ -627,7 +620,7 @@
     clearTimeout(inactivityTimer);
     inactivityTimer = setTimeout(() => {
       lockVault();
-      alert("Aplikasi telah dikunci secara automatik atas faktor keselamatan (2 minit tidak aktif).");
+      alert("Aplikasi telah dikunci secara automatik (2 minit tidak aktif).");
     }, INACTIVITY_TIMEOUT);
   }
 
@@ -635,25 +628,62 @@
     window.addEventListener(evt, resetInactivityTimer, true);
   });
 
-  // --- Auth Flow ---
+  // --- Semak Status First-Time Pengguna ---
+  async function checkInitialVaultStatus() {
+    const raw = await getVaultPayload();
+    if (!raw) {
+      // Kali pertama guna
+      document.getElementById('authTitle').innerText = "Cipta PocketVault";
+      document.getElementById('authDesc').innerText = "Tetapkan Master Password pertama anda untuk melindungi dokumen.";
+      document.getElementById('loginFormSection').classList.add('hidden');
+      document.getElementById('setupFormSection').classList.remove('hidden');
+    } else {
+      // Pengguna sedia ada
+      document.getElementById('authTitle').innerText = "PocketVault Pro";
+      document.getElementById('authDesc').innerText = "Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses.";
+      document.getElementById('loginFormSection').classList.remove('hidden');
+      document.getElementById('setupFormSection').classList.add('hidden');
+    }
+  }
+
+  // First Time Setup Password
+  async function setupNewMasterKey() {
+    const p1 = document.getElementById('newMasterKeyInput').value;
+    const p2 = document.getElementById('confirmMasterKeyInput').value;
+
+    if (!p1 || p1.length < 4) return alert("Sila cipta kata laluan sekurang-kurangnya 4 aksara.");
+    if (p1 !== p2) return alert("Pengesahan kata laluan tidak sepadan!");
+
+    sessionKey = p1;
+    decryptedDocs = [];
+    
+    // Inisialisasi vault kosong dengan password baharu
+    const encrypted = await encryptData(JSON.stringify([]), sessionKey);
+    await setVaultPayload(encrypted);
+
+    document.getElementById('newMasterKeyInput').value = '';
+    document.getElementById('confirmMasterKeyInput').value = '';
+    showApp();
+  }
+
+  // Buka Vault (Login)
   async function unlockVault() {
     const pwd = document.getElementById('masterKeyInput').value;
-    if (!pwd) return alert("Sila masukkan kata laluan utama.");
+    if (!pwd) return alert("Sila masukkan Master Password.");
 
     const raw = await getVaultPayload();
     if (!raw) {
+      checkInitialVaultStatus();
+      return;
+    }
+
+    try {
+      const decryptedStr = await decryptData(raw, pwd);
+      decryptedDocs = JSON.parse(decryptedStr);
       sessionKey = pwd;
-      decryptedDocs = [];
       showApp();
-    } else {
-      try {
-        const decryptedStr = await decryptData(raw, pwd);
-        decryptedDocs = JSON.parse(decryptedStr);
-        sessionKey = pwd;
-        showApp();
-      } catch (err) {
-        alert("Master Password tidak tepat atau data rosak!");
-      }
+    } catch (err) {
+      alert("Master Password tidak tepat!");
     }
   }
 
@@ -673,6 +703,30 @@
     document.getElementById('mainDashboard').classList.add('hidden');
     document.getElementById('dockNav').classList.add('hidden');
     document.getElementById('authScreen').classList.remove('hidden');
+    checkInitialVaultStatus();
+  }
+
+  // --- Tukar Kata Laluan (Change Password) ---
+  async function changeMasterPassword() {
+    const oldP = document.getElementById('oldPasswordInput').value;
+    const newP = document.getElementById('newPasswordChangeInput').value;
+    const confP = document.getElementById('confirmPasswordChangeInput').value;
+
+    if (oldP !== sessionKey) return alert("Master Password semasa tidak betul!");
+    if (!newP || newP.length < 4) return alert("Kata laluan baharu mestilah sekurang-kurangnya 4 aksara.");
+    if (newP !== confP) return alert("Kata laluan baharu tidak sepadan!");
+
+    // Enkrip semula semua dokumen dengan kata laluan baharu
+    sessionKey = newP;
+    const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
+    await setVaultPayload(encrypted);
+
+    document.getElementById('oldPasswordInput').value = '';
+    document.getElementById('newPasswordChangeInput').value = '';
+    document.getElementById('confirmPasswordChangeInput').value = '';
+
+    closeModal('settingsModal');
+    alert("Master Password berjaya ditukar!");
   }
 
   // --- UI Modals & Category Tabs ---
@@ -816,7 +870,6 @@
           </div>
         ` : ''}
 
-        <!-- 3D Flip Card View -->
         ${isFrontImg ? `
           <div class="flip-card-viewport">
             ${hasBackImg ? `<button class="flip-overlay-btn" onclick="toggleFlip(${item.id})">🔄 Pusing Belakang</button>` : ''}
@@ -866,7 +919,7 @@
 
   function copyIdNumber(txt) {
     navigator.clipboard.writeText(txt);
-    if (navigator.vibrate) navigator.vibrate(50); // Maklum Balas Haptik Telefon
+    if (navigator.vibrate) navigator.vibrate(50);
     alert("Nombor ID disalin ke papan keratan!");
   }
 
@@ -890,11 +943,11 @@
         const decryptedStr = await decryptData(payload, sessionKey);
         decryptedDocs = JSON.parse(decryptedStr);
         await setVaultPayload(payload);
-        closeModal('backupModal');
+        closeModal('settingsModal');
         renderDocuments();
-        alert("Sandaran berjaya dipulihkan sepenuhnya!");
+        alert("Sandaran berjaya dipulihkan!");
       } catch (err) {
-        alert("Gagal memulihkan sandaran. Kata laluan salah atau fail tidak sah.");
+        alert("Gagal memulihkan sandaran. Sila pastikan kata laluan fail sandaran sama.");
       }
     };
     reader.readAsText(file);
@@ -902,6 +955,9 @@
 
   function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
   function escapeJs(s) { return (s || '').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+
+  // Inisialisasi awal
+  window.addEventListener('DOMContentLoaded', checkInitialVaultStatus);
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
