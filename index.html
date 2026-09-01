@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vault Dokumen Luar Talian</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 1.25rem; display: flex; justify-content: center; min-height: 100vh; }
+    .container { width: 100%; max-width: 650px; }
+    h1 { font-size: 1.4rem; color: var(--accent); margin-bottom: 0.75rem; font-weight: 700; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+    input, select, textarea { width: 100%; background: #0b1120; border: 1px solid var(--border); color: var(--text); padding: 0.75rem; border-radius: 8px; margin-top: 0.35rem; margin-bottom: 0.8rem; font-size: 0.95rem; }
+    input:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.95rem; transition: background 0.2s; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-secondary { background: #334155; color: var(--text); margin-top: 0.5rem; font-weight: 600; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-danger { background: var(--danger); color: white; border: none; padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; cursor: pointer; }
+    .btn-action { background: #334155; color: var(--text); border: none; padding: 0.45rem 0.8rem; font-size: 0.82rem; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .hidden { display: none !important; }
+    .doc-item { background: #0b1120; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+    .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; }
+    .doc-tag { font-size: 0.75rem; background: #0284c7; color: white; padding: 0.2rem 0.55rem; border-radius: 4px; font-weight: 600; display: inline-block; }
+    .doc-preview-img { width: 100%; max-height: 260px; object-fit: contain; background: #000; border-radius: 8px; margin-top: 0.6rem; border: 1px solid var(--border); }
+    .actions-row { display: flex; gap: 0.5rem; margin-top: 0.8rem; flex-wrap: wrap; }
+    .status-msg { font-size: 0.85rem; color: var(--accent); text-align: center; margin-top: 0.5rem; }
+    .badge-offline { font-size: 0.75rem; background: #166534; color: #86efac; padding: 0.2rem 0.5rem; border-radius: 9999px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Skrin Kunci / Kata Laluan Utama -->
+  <div id="authScreen" class="card">
+    <h1>Kunci Keselamatan Dokumen 🔒</h1>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.2rem; line-height: 1.4;">
+      Semua fail imej IC & Lesen disulitkan secara tempatan (AES-256) di dalam peranti anda. Sila tetapkan / masukkan Kata Laluan Utama (Master Password):
+    </p>
+    <label>Master Password</label>
+    <input type="password" id="masterKeyInput" placeholder="Masukkan kata laluan anda..." autocomplete="current-password">
+    <button class="btn" onclick="unlockVault()">Buka Vault Dokumen</button>
+  </div>
+
+  <!-- Dashboard Utama Dokumen -->
+  <div id="mainDashboard" class="hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div>
+        <h1 style="margin-bottom: 0.2rem;">ID & Fail Vault</h1>
+        <span class="badge-offline">Mod Luar Talian Aktif</span>
+      </div>
+      <button class="btn-action" onclick="lockVault()">Kunci Semula</button>
+    </div>
+
+    <!-- Borang Simpan Dokumen Baru -->
+    <div class="card">
+      <h2 style="font-size: 1.05rem; margin-bottom: 0.8rem; color: var(--accent);">+ Tambah Dokumen / Kad Baru</h2>
+      
+      <label>Kategori Dokumen</label>
+      <select id="docCategory">
+        <option value="Kad Pengenalan (IC)">Kad Pengenalan (IC)</option>
+        <option value="Lesen Memandu">Lesen Memandu</option>
+        <option value="Geran Kenderaan / Cukai Jalan">Geran Kenderaan / Cukai Jalan</option>
+        <option value="Kad Bank / Debit">Kad Bank / Debit</option>
+        <option value="Dokumen Peribadi Lain">Dokumen Peribadi Lain</option>
+      </select>
+
+      <label>Nama / Label Dokumen</label>
+      <input type="text" id="docTitle" placeholder="Contoh: MyKad (Depan & Belakang) / Lesen Memandu">
+
+      <label>No. Rujukan / No. IC / No. Siri (Pilihan)</label>
+      <input type="text" id="docIdentifier" placeholder="Contoh: 020216-11-XXXX">
+
+      <label>Pilih Fail (Gambar JPG/PNG atau PDF)</label>
+      <input type="file" id="docFileInput" accept="image/*,application/pdf">
+
+      <label>Nota Tambahan (Pilihan)</label>
+      <textarea id="docNotes" rows="2" placeholder="Contoh: Tarikh luput lesen, kelas D/DA/B2..."></textarea>
+
+      <button class="btn" id="saveBtn" onclick="saveDocument()">Enkrip & Simpan Dokumen</button>
+      <div id="uploadStatus" class="status-msg"></div>
+    </div>
+
+    <!-- Kotak Carian -->
+    <input type="text" id="searchInput" placeholder="Cari dokumen tersimpan..." oninput="renderDocuments()">
+
+    <!-- Senarai Dokumen -->
+    <div id="docsList"></div>
+
+    <!-- Sandaran Fail (Backup & Restore) -->
+    <div class="card" style="margin-top: 1.5rem;">
+      <h2 style="font-size: 1rem; margin-bottom: 0.4rem;">Sandaran Data Luar Talian (Backup)</h2>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+        Data tersimpan dalam storan pelayar peranti ini. Muat turun fail sandaran (.json tersulit) untuk simpanan kecemasan atau pindah ke peranti lain.
+      </p>
+      <button class="btn btn-secondary" onclick="exportVaultBackup()">Muat Turun Sandaran (Encrypted JSON)</button>
+      <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importVaultBackup(event)">
+      <button class="btn btn-secondary" onclick="document.getElementById('importFileInput').click()">Pulihkan Sandaran (Import)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let sessionKey = null;
+  let decryptedDocs = [];
+  const DB_NAME = 'OfflineIdDocVaultDB';
+  const STORE_NAME = 'encrypted_records';
+
+  // --- 1. Pengurusan Storan Tempatan (IndexedDB) ---
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function getEncryptedVault() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get('vault_data');
+      req.onsuccess = () => resolve(req.result ? req.result.payload : null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function setEncryptedVault(payload) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.put({ id: 'vault_data', payload: payload });
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // --- 2. Kriptografi (Web Crypto AES-GCM 256-bit) ---
+  async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+      keyMaterial,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  async function encryptData(plainText, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const enc = new TextEncoder();
+    
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      enc.encode(plainText)
+    );
+
+    return JSON.stringify({
+      salt: Array.from(salt),
+      iv: Array.from(iv),
+      data: Array.from(new Uint8Array(ciphertext))
+    });
+  }
+
+  async function decryptData(cipherPackage, password) {
+    const pkg = typeof cipherPackage === 'string' ? JSON.parse(cipherPackage) : cipherPackage;
+    const salt = new Uint8Array(pkg.salt);
+    const iv = new Uint8Array(pkg.iv);
+    const data = new Uint8Array(pkg.data);
+    
+    const key = await deriveKey(password, salt);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      data
+    );
+
+    const dec = new TextDecoder();
+    return dec.decode(decrypted);
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({
+        dataUrl: reader.result,
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // --- 3. Operasi Dashboard ---
+  async function unlockVault() {
+    const pwd = document.getElementById('masterKeyInput').value;
+    if (!pwd) return alert("Sila masukkan Master Password.");
+
+    const rawStored = await getEncryptedVault();
+    if (!rawStored) {
+      sessionKey = pwd;
+      decryptedDocs = [];
+      showDashboard();
+    } else {
+      try {
+        const decryptedStr = await decryptData(rawStored, pwd);
+        decryptedDocs = JSON.parse(decryptedStr);
+        sessionKey = pwd;
+        showDashboard();
+      } catch (err) {
+        alert("Master Password tidak tepat atau data tidak sah!");
+      }
+    }
+  }
+
+  function showDashboard() {
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('mainDashboard').classList.remove('hidden');
+    renderDocuments();
+  }
+
+  function lockVault() {
+    sessionKey = null;
+    decryptedDocs = [];
+    document.getElementById('masterKeyInput').value = '';
+    document.getElementById('mainDashboard').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+  }
+
+  async function saveDocument() {
+    const category = document.getElementById('docCategory').value;
+    const title = document.getElementById('docTitle').value.trim();
+    const identifier = document.getElementById('docIdentifier').value.trim();
+    const notes = document.getElementById('docNotes').value.trim();
+    const fileInput = document.getElementById('docFileInput');
+    const status = document.getElementById('uploadStatus');
+
+    if (!title) return alert("Sila masukkan tajuk dokumen.");
+    if (fileInput.files.length === 0) return alert("Sila pilih fail gambar atau PDF.");
+
+    status.innerText = "Sedang menyulitkan (encrypt) dan menyimpan fail...";
+    const fileObj = await fileToBase64(fileInput.files[0]);
+
+    decryptedDocs.unshift({
+      id: Date.now(),
+      category,
+      title,
+      identifier,
+      notes,
+      file: fileObj,
+      createdAt: new Date().toLocaleDateString('ms-MY')
+    });
+
+    const cipherText = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
+    await setEncryptedVault(cipherText);
+
+    // Reset Form
+    document.getElementById('docTitle').value = '';
+    document.getElementById('docIdentifier').value = '';
+    document.getElementById('docNotes').value = '';
+    fileInput.value = '';
+    status.innerText = "";
+
+    renderDocuments();
+  }
+
+  async function deleteDoc(id) {
+    if (!confirm("Padam dokumen ini dari memori peranti?")) return;
+    decryptedDocs = decryptedDocs.filter(doc => doc.id !== id);
+    const cipherText = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
+    await setEncryptedVault(cipherText);
+    renderDocuments();
+  }
+
+  function renderDocuments() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const container = document.getElementById('docsList');
+    container.innerHTML = '';
+
+    const filtered = decryptedDocs.filter(d => 
+      d.title.toLowerCase().includes(query) || 
+      (d.identifier && d.identifier.toLowerCase().includes(query)) ||
+      d.category.toLowerCase().includes(query)
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-muted); text-align: center; margin-top: 1rem;">Tiada dokumen dijumpai.</p>`;
+      return;
+    }
+
+    filtered.forEach(item => {
+      const isImage = item.file && item.file.type.startsWith('image/');
+      const isPdf = item.file && item.file.type === 'application/pdf';
+
+      const el = document.createElement('div');
+      el.className = 'doc-item';
+      el.innerHTML = `
+        <div class="doc-header">
+          <div>
+            <span class="doc-tag">${escapeHtml(item.category)}</span>
+            <h3 style="margin-top: 0.35rem; color: #fff; font-size: 1.05rem;">${escapeHtml(item.title)}</h3>
+          </div>
+          <button class="btn-danger" onclick="deleteDoc(${item.id})">Padam</button>
+        </div>
+
+        ${item.identifier ? `<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem;"><strong>No. Rujukan:</strong> ${escapeHtml(item.identifier)}</p>` : ''}
+        ${item.notes ? `<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">${escapeHtml(item.notes)}</p>` : ''}
+
+        ${isImage ? `<img src="${item.file.dataUrl}" alt="Salinan Dokumen" class="doc-preview-img">` : ''}
+        ${isPdf ? `<div style="background: #1e293b; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid var(--border); margin-top: 0.4rem;">📄 Format PDF: <strong>${escapeHtml(item.file.name)}</strong></div>` : ''}
+
+        <div class="actions-row">
+          <a class="btn-action" href="${item.file.dataUrl}" download="${item.file.name || 'dokumen'}">Muat Turun Fail</a>
+          <button class="btn-action" onclick="viewInNewTab('${item.file.dataUrl}')">Buka Paparan Penuh</button>
+        </div>
+      `;
+      container.appendChild(el);
+    });
+  }
+
+  function viewInNewTab(dataUrl) {
+    const win = window.open();
+    if (win) {
+      win.document.write(`<iframe src="${dataUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+    } else {
+      alert("Sila benarkan pop-up pada pelayar untuk melihat paparan penuh dokumen.");
+    }
+  }
+
+  async function exportVaultBackup() {
+    const rawData = await getEncryptedVault();
+    if (!rawData) return alert("Tiada data untuk dieksport.");
+    const blob = new Blob([rawData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sandaran-vault-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importVaultBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const importedPayload = e.target.result;
+        const testDecrypt = await decryptData(importedPayload, sessionKey);
+        decryptedDocs = JSON.parse(testDecrypt);
+        await setEncryptedVault(importedPayload);
+        renderDocuments();
+        alert("Semua dokumen berjaya dipulihkan!");
+      } catch (err) {
+        alert("Gagal memulihkan fail. Kata laluan tidak sepadan atau fail rosak.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  // Daftarkan Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    });
+  }
+</script>
+</body>
+</html>
