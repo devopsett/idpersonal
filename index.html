@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PocketVault Pro • ID & Documents</title>
+  <title>PocketVault</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#030712">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -197,41 +197,28 @@
       cursor: pointer;
     }
 
-    .flip-card-viewport {
-      perspective: 1000px;
+    /* Main Multi-File Viewer Component */
+    .preview-main-box {
       width: 100%;
       height: 200px;
-      margin-bottom: 0.8rem;
-      position: relative;
-    }
-
-    .flip-card-inner {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .flip-card-inner.flipped { transform: rotateY(180deg); }
-
-    .flip-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
       border-radius: var(--radius-lg);
       overflow: hidden;
       background: #000;
+      position: relative;
       border: 1px solid var(--card-border);
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .flip-face-back { transform: rotateY(180deg); }
-    .flip-img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-main-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-    .flip-overlay-btn {
+    .file-counter-pill {
       position: absolute;
       top: 10px;
       right: 10px;
@@ -244,7 +231,54 @@
       font-size: 0.72rem;
       font-weight: 600;
       z-index: 10;
+    }
+
+    /* Mini Thumbnail Row */
+    .thumb-scroll-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-top: 8px;
+      margin-bottom: 0.8rem;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .thumb-scroll-row::-webkit-scrollbar { display: none; }
+
+    .mini-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid transparent;
       cursor: pointer;
+      background: #000;
+      flex-shrink: 0;
+      opacity: 0.6;
+      transition: all 0.2s;
+    }
+    .mini-thumb.active {
+      border-color: var(--accent);
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    .mini-thumb-pdf {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+    .mini-thumb-pdf.active {
+      border-color: var(--accent);
+      opacity: 1;
     }
 
     .card-footer {
@@ -385,13 +419,13 @@
         Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses.
       </p>
 
-      <!-- Borang Log Masuk Biasa -->
+      <!-- Borang Log Masuk -->
       <div id="loginFormSection">
         <input type="password" id="masterKeyInput" placeholder="Master Password" style="text-align: center; letter-spacing: 0.15em;" autocomplete="current-password">
         <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="unlockVault()">Buka Vault</button>
       </div>
 
-      <!-- Borang First Time Setup -->
+      <!-- Borang Setup Pengguna Pertama Kali -->
       <div id="setupFormSection" class="hidden">
         <input type="password" id="newMasterKeyInput" placeholder="Cipta Master Password Baharu" style="text-align: center;">
         <input type="password" id="confirmMasterKeyInput" placeholder="Sahkan Master Password" style="text-align: center;">
@@ -405,7 +439,7 @@
     <div class="top-header">
       <div>
         <h1 class="brand-title">PocketVault</h1>
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Simpanan Kad & ID Luar Talian</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Simpanan Kad & Dokumen Luar Talian</div>
       </div>
       <div style="display: flex; gap: 6px; align-items: center;">
         <span class="status-badge"><span class="pulse-dot"></span> Offline</span>
@@ -427,7 +461,7 @@
     </div>
 
     <!-- Carian -->
-    <input type="text" id="searchInput" placeholder="🔍 Cari ID, Lesen, No. Rujukan..." oninput="renderDocuments()" style="border-radius: 14px; margin-bottom: 1rem;">
+    <input type="text" id="searchInput" placeholder="🔍 Cari ID, Lesen, Dokumen..." oninput="renderDocuments()" style="border-radius: 14px; margin-bottom: 1rem;">
 
     <!-- Penapis Kategori -->
     <div class="cat-scroll-container">
@@ -456,7 +490,7 @@
   </div>
 </div>
 
-<!-- Modal Borang Tambah Dokumen -->
+<!-- Modal Borang Tambah Dokumen (Multi-File Upload) -->
 <div id="addModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'addModal')">
   <div class="modal-sheet-box">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -474,7 +508,7 @@
     </select>
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Label / Tajuk Kad</label>
-    <input type="text" id="docTitle" placeholder="Contoh: MyKad Depan Belakang / Lesen Memandu">
+    <input type="text" id="docTitle" placeholder="Contoh: MyKad & Lesen / Salinan Dokumen">
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nombor ID / No. Kad</label>
     <input type="text" id="docIdentifier" placeholder="Contoh: 020216-11-XXXX">
@@ -482,11 +516,9 @@
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Tarikh Luput (Pilihan)</label>
     <input type="date" id="docExpiry">
 
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Gambar Bahagian Depan (Front)</label>
-    <input type="file" id="docFrontInput" accept="image/*,application/pdf">
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Gambar Bahagian Belakang (Back - Pilihan)</label>
-    <input type="file" id="docBackInput" accept="image/*">
+    <!-- INPUT MULTIPLE FILES -->
+    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Pilih Fail (Boleh Pilih Lebih Dari 1 Fail: Gambar / PDF)</label>
+    <input type="file" id="docFilesInput" accept="image/*,application/pdf" multiple>
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nota Catatan</label>
     <textarea id="docNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
@@ -503,7 +535,7 @@
       <button onclick="closeModal('settingsModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
     </div>
 
-    <!-- Tukar Password Section -->
+    <!-- Tukar Password -->
     <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--card-border); margin-bottom: 1.2rem;">
       <h4 style="font-size: 0.95rem; color: var(--accent); margin-bottom: 0.6rem;">🔑 Tukar Master Password</h4>
       <input type="password" id="oldPasswordInput" placeholder="Master Password Semasa">
@@ -537,6 +569,7 @@
   let sessionKey = null;
   let decryptedDocs = [];
   let currentFilterCategory = 'Semua';
+  let activePreviewIndices = {}; // Simpan status indeks fail aktif untuk setiap kad { docId: activeFileIndex }
   let inactivityTimer = null;
   const INACTIVITY_TIMEOUT = 2 * 60 * 1000;
 
@@ -576,7 +609,7 @@
     });
   }
 
-  // --- Web Crypto (AES-256 GCM) ---
+  // --- Kriptografi (AES-256 GCM) ---
   async function deriveKey(password, salt) {
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
@@ -614,7 +647,7 @@
     });
   }
 
-  // --- Auto-Lock Controller ---
+  // --- Auto-Lock ---
   function resetInactivityTimer() {
     if (!sessionKey) return;
     clearTimeout(inactivityTimer);
@@ -628,17 +661,15 @@
     window.addEventListener(evt, resetInactivityTimer, true);
   });
 
-  // --- Semak Status First-Time Pengguna ---
+  // --- Semak Status Initial Pengguna ---
   async function checkInitialVaultStatus() {
     const raw = await getVaultPayload();
     if (!raw) {
-      // Kali pertama guna
       document.getElementById('authTitle').innerText = "Cipta PocketVault";
       document.getElementById('authDesc').innerText = "Tetapkan Master Password pertama anda untuk melindungi dokumen.";
       document.getElementById('loginFormSection').classList.add('hidden');
       document.getElementById('setupFormSection').classList.remove('hidden');
     } else {
-      // Pengguna sedia ada
       document.getElementById('authTitle').innerText = "PocketVault Pro";
       document.getElementById('authDesc').innerText = "Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses.";
       document.getElementById('loginFormSection').classList.remove('hidden');
@@ -646,7 +677,6 @@
     }
   }
 
-  // First Time Setup Password
   async function setupNewMasterKey() {
     const p1 = document.getElementById('newMasterKeyInput').value;
     const p2 = document.getElementById('confirmMasterKeyInput').value;
@@ -656,8 +686,6 @@
 
     sessionKey = p1;
     decryptedDocs = [];
-    
-    // Inisialisasi vault kosong dengan password baharu
     const encrypted = await encryptData(JSON.stringify([]), sessionKey);
     await setVaultPayload(encrypted);
 
@@ -666,7 +694,6 @@
     showApp();
   }
 
-  // Buka Vault (Login)
   async function unlockVault() {
     const pwd = document.getElementById('masterKeyInput').value;
     if (!pwd) return alert("Sila masukkan Master Password.");
@@ -680,6 +707,18 @@
     try {
       const decryptedStr = await decryptData(raw, pwd);
       decryptedDocs = JSON.parse(decryptedStr);
+      
+      // Backwards-compatibility: jika rekod lama menggunakan frontFile/backFile, tukar ke format files array
+      decryptedDocs.forEach(d => {
+        if (!d.files) {
+          d.files = [];
+          if (d.frontFile) d.files.push(d.frontFile);
+          if (d.backFile) d.files.push(d.backFile);
+          delete d.frontFile;
+          delete d.backFile;
+        }
+      });
+
       sessionKey = pwd;
       showApp();
     } catch (err) {
@@ -698,6 +737,7 @@
   function lockVault() {
     sessionKey = null;
     decryptedDocs = [];
+    activePreviewIndices = {};
     clearTimeout(inactivityTimer);
     document.getElementById('masterKeyInput').value = '';
     document.getElementById('mainDashboard').classList.add('hidden');
@@ -706,7 +746,6 @@
     checkInitialVaultStatus();
   }
 
-  // --- Tukar Kata Laluan (Change Password) ---
   async function changeMasterPassword() {
     const oldP = document.getElementById('oldPasswordInput').value;
     const newP = document.getElementById('newPasswordChangeInput').value;
@@ -716,7 +755,6 @@
     if (!newP || newP.length < 4) return alert("Kata laluan baharu mestilah sekurang-kurangnya 4 aksara.");
     if (newP !== confP) return alert("Kata laluan baharu tidak sepadan!");
 
-    // Enkrip semula semua dokumen dengan kata laluan baharu
     sessionKey = newP;
     const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
     await setVaultPayload(encrypted);
@@ -729,7 +767,6 @@
     alert("Master Password berjaya ditukar!");
   }
 
-  // --- UI Modals & Category Tabs ---
   function openModal(id) { document.getElementById(id).classList.add('active'); }
   function closeModal(id) { document.getElementById(id).classList.remove('active'); }
   function closeOnBackdrop(e, id) { if (e.target.id === id) closeModal(id); }
@@ -741,28 +778,23 @@
     renderDocuments();
   }
 
-  function toggleFlip(id) {
-    const card = document.getElementById(`flipInner-${id}`);
-    if (card) card.classList.toggle('flipped');
-  }
-
-  // --- Document Operations ---
+  // --- Multiple Files Upload Handler ---
   async function saveDocument() {
     const category = document.getElementById('docCategory').value;
     const title = document.getElementById('docTitle').value.trim();
     const identifier = document.getElementById('docIdentifier').value.trim();
     const expiry = document.getElementById('docExpiry').value;
     const notes = document.getElementById('docNotes').value.trim();
-    const frontInput = document.getElementById('docFrontInput');
-    const backInput = document.getElementById('docBackInput');
+    const filesInput = document.getElementById('docFilesInput');
 
     if (!title) return alert("Sila masukkan tajuk dokumen.");
-    if (frontInput.files.length === 0) return alert("Sila pilih sekurang-kurangnya satu fail (bahagian depan).");
+    if (filesInput.files.length === 0) return alert("Sila pilih sekurang-kurangnya satu fail.");
 
-    const frontFile = await fileToBase64(frontInput.files[0]);
-    let backFile = null;
-    if (backInput.files.length > 0) {
-      backFile = await fileToBase64(backInput.files[0]);
+    // Tukar semua fail yang dipilih kepada format base64
+    const filesArray = [];
+    for (let i = 0; i < filesInput.files.length; i++) {
+      const fileData = await fileToBase64(filesInput.files[i]);
+      filesArray.push(fileData);
     }
 
     decryptedDocs.unshift({
@@ -772,8 +804,7 @@
       identifier,
       expiry,
       notes,
-      frontFile,
-      backFile,
+      files: filesArray,
       createdAt: new Date().toLocaleDateString('ms-MY')
     });
 
@@ -785,8 +816,7 @@
     document.getElementById('docIdentifier').value = '';
     document.getElementById('docExpiry').value = '';
     document.getElementById('docNotes').value = '';
-    frontInput.value = '';
-    backInput.value = '';
+    filesInput.value = '';
 
     closeModal('addModal');
     renderDocuments();
@@ -795,6 +825,7 @@
   async function deleteDoc(id) {
     if (!confirm("Padam kad/dokumen ini daripada memori telefon?")) return;
     decryptedDocs = decryptedDocs.filter(d => d.id !== id);
+    delete activePreviewIndices[id];
     const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
     await setVaultPayload(encrypted);
     renderDocuments();
@@ -814,12 +845,14 @@
     const expDate = new Date(expDateStr);
     const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) {
-      return '<span class="expiry-tag exp-danger">⚠️ Telah Tamat</span>';
-    } else if (diffDays <= 30) {
-      return `<span class="expiry-tag exp-warning">⏳ Luput dlm ${diffDays} hari</span>`;
-    }
+    if (diffDays < 0) return '<span class="expiry-tag exp-danger">⚠️ Telah Tamat</span>';
+    if (diffDays <= 30) return `<span class="expiry-tag exp-warning">⏳ Luput dlm ${diffDays} hari</span>`;
     return `<span class="expiry-tag exp-safe">Luput: ${expDateStr}</span>`;
+  }
+
+  function switchActiveFile(docId, fileIndex) {
+    activePreviewIndices[docId] = fileIndex;
+    renderDocuments();
   }
 
   function renderDocuments() {
@@ -846,9 +879,11 @@
     }
 
     filtered.forEach(item => {
-      const isFrontImg = item.frontFile && item.frontFile.type.startsWith('image/');
-      const isPdf = item.frontFile && item.frontFile.type === 'application/pdf';
-      const hasBackImg = item.backFile && item.backFile.type.startsWith('image/');
+      const files = item.files || [];
+      const activeIdx = activePreviewIndices[item.id] || 0;
+      const currentFile = files[activeIdx] || files[0];
+      const isImg = currentFile && currentFile.type && currentFile.type.startsWith('image/');
+      const isPdf = currentFile && currentFile.type === 'application/pdf';
 
       const card = document.createElement('div');
       card.className = 'vault-card glass-box';
@@ -870,36 +905,43 @@
           </div>
         ` : ''}
 
-        ${isFrontImg ? `
-          <div class="flip-card-viewport">
-            ${hasBackImg ? `<button class="flip-overlay-btn" onclick="toggleFlip(${item.id})">🔄 Pusing Belakang</button>` : ''}
-            <div class="flip-card-inner" id="flipInner-${item.id}">
-              <div class="flip-face" onclick="openPreview('${item.frontFile.dataUrl}', '${escapeJs(item.title)} (Depan)')">
-                <img src="${item.frontFile.dataUrl}" class="flip-img" alt="Depan">
-              </div>
-              ${hasBackImg ? `
-              <div class="flip-face flip-face-back" onclick="openPreview('${item.backFile.dataUrl}', '${escapeJs(item.title)} (Belakang)')">
-                <img src="${item.backFile.dataUrl}" class="flip-img" alt="Belakang">
+        <!-- Paparan Utama Fail Aktif -->
+        ${currentFile ? `
+          <div class="preview-main-box" onclick="openPreview('${currentFile.dataUrl}', '${escapeJs(item.title)} - ${escapeJs(currentFile.name)}')">
+            <span class="file-counter-pill">Fail ${activeIdx + 1} / ${files.length}</span>
+            ${isImg ? `<img src="${currentFile.dataUrl}" alt="Preview">` : ''}
+            ${isPdf ? `
+              <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2.5rem;">📄</div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: #fff; margin-top: 4px;">${escapeHtml(currentFile.name)}</div>
+                <div style="font-size: 0.72rem; color: var(--accent); margin-top: 2px;">Sentuh untuk baca PDF</div>
               </div>` : ''}
-            </div>
           </div>
         ` : ''}
 
-        ${isPdf ? `
-          <div style="padding: 1.5rem; background: rgba(0,0,0,0.4); border-radius: var(--radius-lg); text-align: center; border: 1px dashed var(--card-border); margin-bottom: 0.8rem; cursor: pointer;" onclick="openPreview('${item.frontFile.dataUrl}', '${escapeJs(item.title)}')">
-            <div style="font-size: 2.2rem;">📄</div>
-            <div style="font-size: 0.85rem; font-weight: 600; color: #fff; margin-top: 4px;">${escapeHtml(item.frontFile.name)}</div>
-            <div style="font-size: 0.72rem; color: var(--accent); margin-top: 2px;">Sentuh untuk baca PDF</div>
+        <!-- Galeri Thumbnail (Jika lebih dari 1 fail dimuat naik) -->
+        ${files.length > 1 ? `
+          <div class="thumb-scroll-row">
+            ${files.map((f, idx) => {
+              const thumbIsImg = f.type && f.type.startsWith('image/');
+              return thumbIsImg ? `
+                <img src="${f.dataUrl}" class="mini-thumb ${idx === activeIdx ? 'active' : ''}" onclick="switchActiveFile(${item.id}, ${idx})">
+              ` : `
+                <div class="mini-thumb-pdf ${idx === activeIdx ? 'active' : ''}" onclick="switchActiveFile(${item.id}, ${idx})">📄</div>
+              `;
+            }).join('')}
           </div>
         ` : ''}
 
-        ${item.notes ? `<p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem; line-height: 1.4;">${escapeHtml(item.notes)}</p>` : ''}
+        ${item.notes ? `<p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem; margin-top: 0.4rem; line-height: 1.4;">${escapeHtml(item.notes)}</p>` : ''}
 
         <div class="card-footer">
-          <span style="font-size: 0.75rem; color: var(--text-muted);">${item.createdAt}</span>
-          <a class="ghost-btn" href="${item.frontFile.dataUrl}" download="${item.frontFile.name || 'document'}">
-            ⬇️ Muat Turun Fail Asal
-          </a>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">${item.createdAt} (${files.length} Fail)</span>
+          ${currentFile ? `
+            <a class="ghost-btn" href="${currentFile.dataUrl}" download="${currentFile.name || 'document'}">
+              ⬇️ Muat Turun Fail
+            </a>
+          ` : ''}
         </div>
       `;
       list.appendChild(card);
@@ -945,7 +987,7 @@
         await setVaultPayload(payload);
         closeModal('settingsModal');
         renderDocuments();
-        alert("Sandaran berjaya dipulihkan!");
+        alert("Sandaran berjaya dipulihkan sepenuhnya!");
       } catch (err) {
         alert("Gagal memulihkan sandaran. Sila pastikan kata laluan fail sandaran sama.");
       }
@@ -956,7 +998,6 @@
   function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
   function escapeJs(s) { return (s || '').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
 
-  // Inisialisasi awal
   window.addEventListener('DOMContentLoaded', checkInitialVaultStatus);
 
   if ('serviceWorker' in navigator) {
