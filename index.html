@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PocketVault</title>
+  <title>PocketVault • Offline & Online</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#030712">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -72,7 +72,8 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .status-badge {
+    /* Live Network Detector Badge */
+    .net-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -80,18 +81,13 @@
       border-radius: 999px;
       font-size: 0.75rem;
       font-weight: 600;
-      background: rgba(16, 185, 129, 0.12);
-      color: var(--emerald);
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      transition: all 0.3s ease;
     }
-
-    .pulse-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--emerald);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--emerald);
-    }
+    .net-online { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .net-offline { background: rgba(244, 63, 94, 0.15); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .pulse-online { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+    .pulse-offline { background: var(--rose); box-shadow: 0 0 8px var(--rose); }
 
     .hero-stat-card {
       border-radius: var(--radius-xl);
@@ -197,7 +193,6 @@
       cursor: pointer;
     }
 
-    /* Main Multi-File Viewer Component */
     .preview-main-box {
       width: 100%;
       height: 200px;
@@ -212,11 +207,7 @@
       justify-content: center;
     }
 
-    .preview-main-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .preview-main-box img { width: 100%; height: 100%; object-fit: cover; }
 
     .file-counter-pill {
       position: absolute;
@@ -233,7 +224,6 @@
       z-index: 10;
     }
 
-    /* Mini Thumbnail Row */
     .thumb-scroll-row {
       display: flex;
       gap: 6px;
@@ -257,11 +247,8 @@
       opacity: 0.6;
       transition: all 0.2s;
     }
-    .mini-thumb.active {
-      border-color: var(--accent);
-      opacity: 1;
-      transform: scale(1.05);
-    }
+    .mini-thumb.active { border-color: var(--accent); opacity: 1; transform: scale(1.05); }
+
     .mini-thumb-pdf {
       width: 48px;
       height: 48px;
@@ -276,10 +263,7 @@
       flex-shrink: 0;
       opacity: 0.6;
     }
-    .mini-thumb-pdf.active {
-      border-color: var(--accent);
-      opacity: 1;
-    }
+    .mini-thumb-pdf.active { border-color: var(--accent); opacity: 1; }
 
     .card-footer {
       display: flex;
@@ -408,7 +392,7 @@
 
 <div class="app-wrapper">
 
-  <!-- Skrin Kunci & Setup Awal -->
+  <!-- Skrin Kunci & Setup -->
   <div id="authScreen" style="min-height: 85vh; display: flex; flex-direction: column; justify-content: center;">
     <div class="glass-box" style="border-radius: var(--radius-xl); padding: 2.25rem 1.5rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
       <div style="width: 64px; height: 64px; background: rgba(56,189,248,0.1); border: 1px solid var(--card-border); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem auto; font-size: 2rem;">
@@ -416,16 +400,14 @@
       </div>
       <h1 class="brand-title" id="authTitle" style="font-size: 1.6rem; margin-bottom: 0.3rem;">PocketVault Pro</h1>
       <p id="authDesc" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.4;">
-        Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses.
+        Enkripsi AES-256 tempatan. Akses penuh Offline & Cloud Sync.
       </p>
 
-      <!-- Borang Log Masuk -->
       <div id="loginFormSection">
         <input type="password" id="masterKeyInput" placeholder="Master Password" style="text-align: center; letter-spacing: 0.15em;" autocomplete="current-password">
         <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="unlockVault()">Buka Vault</button>
       </div>
 
-      <!-- Borang Setup Pengguna Pertama Kali -->
       <div id="setupFormSection" class="hidden">
         <input type="password" id="newMasterKeyInput" placeholder="Cipta Master Password Baharu" style="text-align: center;">
         <input type="password" id="confirmMasterKeyInput" placeholder="Sahkan Master Password" style="text-align: center;">
@@ -439,10 +421,14 @@
     <div class="top-header">
       <div>
         <h1 class="brand-title">PocketVault</h1>
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Simpanan Kad & Dokumen Luar Talian</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Offline & Cloud Sync Hub</div>
       </div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <span class="status-badge"><span class="pulse-dot"></span> Offline</span>
+        <!-- Penunjuk Live Status Network -->
+        <span id="networkStatusBadge" class="net-badge net-online">
+          <span id="networkDot" class="pulse-dot pulse-online"></span>
+          <span id="networkText">Online</span>
+        </span>
         <button class="btn-icon-dock" style="width: 38px; height: 38px; border-radius: 50%; color: var(--rose); background: rgba(244,63,94,0.1);" onclick="lockVault()" title="Kunci">🔒</button>
       </div>
     </div>
@@ -451,11 +437,11 @@
     <div class="hero-stat-card glass-box">
       <div class="stat-flex">
         <div>
-          <div class="stat-label">Jumlah Dokumen Disimpan</div>
+          <div class="stat-label">Dokumen Tersimpan</div>
           <div class="stat-value" id="totalDocsCounter">0</div>
         </div>
         <div style="text-align: right;">
-          <span style="font-size: 0.75rem; color: var(--text-muted);">Auto-Lock: <strong>2 Minit</strong></span>
+          <button class="btn-icon-dock" style="width: auto; padding: 6px 12px; font-size: 0.75rem; border-radius: 8px;" onclick="quickCloudSync()">☁️ Sync Cloud</button>
         </div>
       </div>
     </div>
@@ -484,13 +470,16 @@
     <button class="btn-main-action" onclick="openModal('addModal')">
       <span>＋ Tambah Dokumen Baru</span>
     </button>
-    <button class="btn-icon-dock" onclick="openModal('settingsModal')" title="Tetapan & Sandaran">
+    <button class="btn-icon-dock" onclick="openModal('cloudModal')" title="Penyelarasan Awan">
+      ☁️
+    </button>
+    <button class="btn-icon-dock" onclick="openModal('settingsModal')" title="Tetapan">
       ⚙️
     </button>
   </div>
 </div>
 
-<!-- Modal Borang Tambah Dokumen (Multi-File Upload) -->
+<!-- Modal Tambah Dokumen -->
 <div id="addModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'addModal')">
   <div class="modal-sheet-box">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -516,22 +505,42 @@
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Tarikh Luput (Pilihan)</label>
     <input type="date" id="docExpiry">
 
-    <!-- INPUT MULTIPLE FILES -->
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Pilih Fail (Boleh Pilih Lebih Dari 1 Fail: Gambar / PDF)</label>
+    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Pilih Fail (Boleh Pilih Banyak: Imej/PDF)</label>
     <input type="file" id="docFilesInput" accept="image/*,application/pdf" multiple>
 
     <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nota Catatan</label>
     <textarea id="docNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
 
-    <button class="btn-main-action" style="width: 100%; margin-top: 0.5rem;" id="saveBtn" onclick="saveDocument()">Enkrip & Simpan Dokumen</button>
+    <button class="btn-main-action" style="width: 100%; margin-top: 0.5rem;" id="saveBtn" onclick="saveDocument()">Enkrip & Simpan ke Memori</button>
   </div>
 </div>
 
-<!-- Modal Tetapan, Tukar Password & Sandaran -->
+<!-- Modal Cloud Sync (Google Drive) -->
+<div id="cloudModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'cloudModal')">
+  <div class="modal-sheet-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Cloud Sync (Google Drive) ☁️</h3>
+      <button onclick="closeModal('cloudModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
+    </div>
+    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
+      Salinan data tersulit anda dihantar ke Google Drive peribadi secara selamat tanpa merosakkan akses luar talian (offline).
+    </p>
+
+    <button class="btn-main-action" style="width: 100%; margin-bottom: 0.8rem;" onclick="syncUploadToCloud()">
+      ⬆️ Muat Naik Sandaran ke Drive
+    </button>
+    <button class="btn-main-action" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); box-shadow: none;" onclick="syncDownloadFromCloud()">
+      ⬇️ Muat Turun Data dari Drive
+    </button>
+    <div id="cloudSyncStatus" style="font-size: 0.8rem; color: var(--accent); text-align: center; margin-top: 0.8rem;"></div>
+  </div>
+</div>
+
+<!-- Modal Tetapan -->
 <div id="settingsModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'settingsModal')">
   <div class="modal-sheet-box">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Tetapan & Sandaran</h3>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Tetapan</h3>
       <button onclick="closeModal('settingsModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
     </div>
 
@@ -544,13 +553,10 @@
       <button class="btn-main-action" style="width: 100%; font-size: 0.85rem; padding: 0.75rem;" onclick="changeMasterPassword()">Kemas Kini Kata Laluan</button>
     </div>
 
-    <h4 style="font-size: 0.95rem; color: #fff; margin-bottom: 0.5rem;">📁 Sandaran Data (Backup)</h4>
-    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
-      Muat turun salinan fail data tersulit (.json) untuk tujuan sandaran.
-    </p>
+    <h4 style="font-size: 0.95rem; color: #fff; margin-bottom: 0.5rem;">📁 Sandaran Manual (.JSON)</h4>
     <button class="btn-main-action" style="width: 100%; margin-bottom: 0.8rem;" onclick="exportVaultBackup()">Muat Turun Fail Sandaran</button>
     <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importVaultBackup(event)">
-    <button class="btn-main-action" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); box-shadow: none;" onclick="document.getElementById('importFileInput').click()">Pulihkan Sandaran (Import)</button>
+    <button class="btn-main-action" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); box-shadow: none;" onclick="document.getElementById('importFileInput').click()">Pulihkan Sandaran Fail</button>
   </div>
 </div>
 
@@ -566,15 +572,40 @@
 </div>
 
 <script>
+  // -------------------------------------------------------------
+  // MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI
+  // -------------------------------------------------------------
+  const GAS_ENDPOINT_URL = "URL_GOOGLE_APPS_SCRIPT_ANDA"; 
+
   let sessionKey = null;
   let decryptedDocs = [];
   let currentFilterCategory = 'Semua';
-  let activePreviewIndices = {}; // Simpan status indeks fail aktif untuk setiap kad { docId: activeFileIndex }
+  let activePreviewIndices = {};
   let inactivityTimer = null;
   const INACTIVITY_TIMEOUT = 2 * 60 * 1000;
 
   const DB_NAME = 'PocketVaultProDB';
   const STORE_NAME = 'docs_v3';
+
+  // --- Pengesan Status Internet (Online/Offline) ---
+  function updateNetworkStatus() {
+    const badge = document.getElementById('networkStatusBadge');
+    const dot = document.getElementById('networkDot');
+    const text = document.getElementById('networkText');
+
+    if (navigator.onLine) {
+      badge.className = "net-badge net-online";
+      dot.className = "pulse-dot pulse-online";
+      text.innerText = "Online";
+    } else {
+      badge.className = "net-badge net-offline";
+      dot.className = "pulse-dot pulse-offline";
+      text.innerText = "Offline";
+    }
+  }
+
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
 
   // --- IndexedDB Management ---
   function openDB() {
@@ -653,7 +684,7 @@
     clearTimeout(inactivityTimer);
     inactivityTimer = setTimeout(() => {
       lockVault();
-      alert("Aplikasi telah dikunci secara automatik (2 minit tidak aktif).");
+      alert("Aplikasi dikunci automatik (2 minit tidak aktif).");
     }, INACTIVITY_TIMEOUT);
   }
 
@@ -661,8 +692,9 @@
     window.addEventListener(evt, resetInactivityTimer, true);
   });
 
-  // --- Semak Status Initial Pengguna ---
+  // --- Auth Flow ---
   async function checkInitialVaultStatus() {
+    updateNetworkStatus();
     const raw = await getVaultPayload();
     if (!raw) {
       document.getElementById('authTitle').innerText = "Cipta PocketVault";
@@ -707,18 +739,6 @@
     try {
       const decryptedStr = await decryptData(raw, pwd);
       decryptedDocs = JSON.parse(decryptedStr);
-      
-      // Backwards-compatibility: jika rekod lama menggunakan frontFile/backFile, tukar ke format files array
-      decryptedDocs.forEach(d => {
-        if (!d.files) {
-          d.files = [];
-          if (d.frontFile) d.files.push(d.frontFile);
-          if (d.backFile) d.files.push(d.backFile);
-          delete d.frontFile;
-          delete d.backFile;
-        }
-      });
-
       sessionKey = pwd;
       showApp();
     } catch (err) {
@@ -746,39 +766,71 @@
     checkInitialVaultStatus();
   }
 
-  async function changeMasterPassword() {
-    const oldP = document.getElementById('oldPasswordInput').value;
-    const newP = document.getElementById('newPasswordChangeInput').value;
-    const confP = document.getElementById('confirmPasswordChangeInput').value;
+  // --- Cloud Sync Functions (Google Drive Integration) ---
+  async function syncUploadToCloud() {
+    if (!navigator.onLine) return alert("Tiada sambungan internet untuk melakukan Cloud Sync!");
+    if (!GAS_ENDPOINT_URL || GAS_ENDPOINT_URL.includes("URL_GOOGLE_APPS_SCRIPT")) {
+      return alert("Sila masukkan URL Web App Google Apps Script anda di dalam kod.");
+    }
 
-    if (oldP !== sessionKey) return alert("Master Password semasa tidak betul!");
-    if (!newP || newP.length < 4) return alert("Kata laluan baharu mestilah sekurang-kurangnya 4 aksara.");
-    if (newP !== confP) return alert("Kata laluan baharu tidak sepadan!");
+    const statusEl = document.getElementById('cloudSyncStatus');
+    statusEl.innerText = "Menghantar sandaran ke Google Drive...";
 
-    sessionKey = newP;
-    const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
-    await setVaultPayload(encrypted);
+    const rawPayload = await getVaultPayload();
+    if (!rawPayload) return alert("Tiada data untuk diselaraskan.");
 
-    document.getElementById('oldPasswordInput').value = '';
-    document.getElementById('newPasswordChangeInput').value = '';
-    document.getElementById('confirmPasswordChangeInput').value = '';
-
-    closeModal('settingsModal');
-    alert("Master Password berjaya ditukar!");
+    try {
+      const res = await fetch(GAS_ENDPOINT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "upload_backup",
+          payload: rawPayload
+        })
+      });
+      const data = await res.json();
+      statusEl.innerText = data.message || "Berjaya sync ke Drive!";
+      alert(data.message);
+    } catch (e) {
+      statusEl.innerText = "Gagal memuat naik: " + e.toString();
+    }
   }
 
-  function openModal(id) { document.getElementById(id).classList.add('active'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-  function closeOnBackdrop(e, id) { if (e.target.id === id) closeModal(id); }
+  async function syncDownloadFromCloud() {
+    if (!navigator.onLine) return alert("Tiada sambungan internet!");
+    if (!confirm("Muat turun data terkini dari Drive? Data dalam peranti ini akan diselaraskan semula.")) return;
 
-  function setCategoryFilter(cat, elem) {
-    currentFilterCategory = cat;
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    elem.classList.add('active');
-    renderDocuments();
+    const statusEl = document.getElementById('cloudSyncStatus');
+    statusEl.innerText = "Mengambil data dari Google Drive...";
+
+    try {
+      const res = await fetch(GAS_ENDPOINT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "fetch_backup" })
+      });
+      const data = await res.json();
+
+      if (data.status === "success") {
+        const decryptedStr = await decryptData(data.payload, sessionKey);
+        decryptedDocs = JSON.parse(decryptedStr);
+        await setVaultPayload(data.payload);
+        renderDocuments();
+        statusEl.innerText = "Data berjaya dimuat turun & diselaraskan!";
+        alert("Pangkalan data berjaya diselaraskan dari Google Drive!");
+      } else {
+        statusEl.innerText = data.message;
+      }
+    } catch (e) {
+      statusEl.innerText = "Gagal: " + e.toString();
+    }
   }
 
-  // --- Multiple Files Upload Handler ---
+  function quickCloudSync() {
+    openModal('cloudModal');
+  }
+
+  // --- Document Operations ---
   async function saveDocument() {
     const category = document.getElementById('docCategory').value;
     const title = document.getElementById('docTitle').value.trim();
@@ -790,7 +842,6 @@
     if (!title) return alert("Sila masukkan tajuk dokumen.");
     if (filesInput.files.length === 0) return alert("Sila pilih sekurang-kurangnya satu fail.");
 
-    // Tukar semua fail yang dipilih kepada format base64
     const filesArray = [];
     for (let i = 0; i < filesInput.files.length; i++) {
       const fileData = await fileToBase64(filesInput.files[i]);
@@ -811,7 +862,6 @@
     const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
     await setVaultPayload(encrypted);
 
-    // Reset Form
     document.getElementById('docTitle').value = '';
     document.getElementById('docIdentifier').value = '';
     document.getElementById('docExpiry').value = '';
@@ -905,7 +955,6 @@
           </div>
         ` : ''}
 
-        <!-- Paparan Utama Fail Aktif -->
         ${currentFile ? `
           <div class="preview-main-box" onclick="openPreview('${currentFile.dataUrl}', '${escapeJs(item.title)} - ${escapeJs(currentFile.name)}')">
             <span class="file-counter-pill">Fail ${activeIdx + 1} / ${files.length}</span>
@@ -919,7 +968,6 @@
           </div>
         ` : ''}
 
-        <!-- Galeri Thumbnail (Jika lebih dari 1 fail dimuat naik) -->
         ${files.length > 1 ? `
           <div class="thumb-scroll-row">
             ${files.map((f, idx) => {
@@ -962,7 +1010,18 @@
   function copyIdNumber(txt) {
     navigator.clipboard.writeText(txt);
     if (navigator.vibrate) navigator.vibrate(50);
-    alert("Nombor ID disalin ke papan keratan!");
+    alert("Nombor ID disalin!");
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  function closeOnBackdrop(e, id) { if (e.target.id === id) closeModal(id); }
+
+  function setCategoryFilter(cat, elem) {
+    currentFilterCategory = cat;
+    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    elem.classList.add('active');
+    renderDocuments();
   }
 
   async function exportVaultBackup() {
@@ -989,10 +1048,31 @@
         renderDocuments();
         alert("Sandaran berjaya dipulihkan sepenuhnya!");
       } catch (err) {
-        alert("Gagal memulihkan sandaran. Sila pastikan kata laluan fail sandaran sama.");
+        alert("Gagal memulihkan sandaran. Sila pastikan kata laluan sama.");
       }
     };
     reader.readAsText(file);
+  }
+
+  async function changeMasterPassword() {
+    const oldP = document.getElementById('oldPasswordInput').value;
+    const newP = document.getElementById('newPasswordChangeInput').value;
+    const confP = document.getElementById('confirmPasswordChangeInput').value;
+
+    if (oldP !== sessionKey) return alert("Master Password semasa tidak betul!");
+    if (!newP || newP.length < 4) return alert("Kata laluan baharu mestilah sekurang-kurangnya 4 aksara.");
+    if (newP !== confP) return alert("Kata laluan baharu tidak sepadan!");
+
+    sessionKey = newP;
+    const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
+    await setVaultPayload(encrypted);
+
+    document.getElementById('oldPasswordInput').value = '';
+    document.getElementById('newPasswordChangeInput').value = '';
+    document.getElementById('confirmPasswordChangeInput').value = '';
+
+    closeModal('settingsModal');
+    alert("Master Password berjaya ditukar!");
   }
 
   function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
