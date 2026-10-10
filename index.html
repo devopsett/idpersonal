@@ -3,50 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password & Credential Vault</title>
+  <title>Pengurus Kata Laluan PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6 font-sans">
   <div class="max-w-xl mx-auto space-y-6">
-    
-    <header class="border-b border-slate-800 pb-4">
-      <h1 class="text-2xl font-bold text-teal-400">Credential Vault</h1>
-      <p class="text-xs text-slate-400 mt-1">Disulitkan dengan AES sebelum dihantar ke Google Sheets</p>
+
+    <!-- Header & Status Sambungan -->
+    <header class="border-b border-slate-800 pb-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-teal-400">Pengurus Akaun</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Storan IndexedDB & Google Sheets</p>
+      </div>
+      <div id="networkStatus" class="flex items-center space-x-1.5 text-xs bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700 text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="networkText">Dalam Talian</span>
+      </div>
     </header>
 
-    <!-- Master Key Input -->
-    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
-      <label class="block text-xs uppercase tracking-wider text-slate-400 mb-2">Master Key (Kunci Enkripsi)</label>
-      <input type="password" id="masterKey" placeholder="Masukkan kunci rahsia anda..." 
-        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
-      <span class="text-[11px] text-amber-400/90 mt-1 block">*Kata laluan disimpan tanpa kunci ini. Simpan kunci dengan selamat.</span>
-    </div>
-
     <!-- Borang Tambah Rekod -->
-    <form id="vaultForm" class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-3">
-      <h2 class="text-sm font-semibold text-slate-200">Tambah Kelayakan Baharu</h2>
+    <form id="vaultForm" class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80 shadow-lg space-y-4">
+      <h2 class="text-sm font-semibold text-slate-200">Tambah Akaun Baharu</h2>
       
       <div>
-        <label class="block text-xs text-slate-400 mb-1">Nama Aplikasi / Servis</label>
-        <input type="text" id="appName" placeholder="cth: Maybank2u, Gmail, GitHub" required
-          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+        <label class="block text-xs text-slate-400 mb-1">Nama Aplikasi / Laman Web</label>
+        <input type="text" id="appName" placeholder="cth: GitHub, MyCar, Portal Kerja" required
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400 text-slate-100" />
       </div>
 
       <div>
         <label class="block text-xs text-slate-400 mb-1">Username / ID / Emel</label>
-        <input type="text" id="username" placeholder="cth: user@gmail.com" required
-          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+        <input type="text" id="username" placeholder="cth: rasek@domain.com" required
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400 text-slate-100" />
       </div>
 
       <div>
         <label class="block text-xs text-slate-400 mb-1">Kata Laluan</label>
-        <input type="password" id="appPassword" placeholder="••••••••" required
-          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+        <div class="relative">
+          <input type="password" id="appPassword" placeholder="••••••••" required
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400 text-slate-100 pr-10" />
+          <button type="button" id="togglePasswordVisibility" class="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-slate-200">
+            👁️
+          </button>
+        </div>
       </div>
 
       <button type="submit" id="saveBtn"
-        class="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold py-2 rounded-lg text-sm transition">
+        class="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold py-2.5 rounded-lg text-sm transition active:scale-[0.98]">
         Simpan Rekod
       </button>
     </form>
@@ -54,141 +59,234 @@
     <!-- Senarai Rekod -->
     <div class="space-y-3">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-slate-200">Senarai Tersimpan</h2>
-        <button id="refreshBtn" class="text-xs text-teal-400 hover:underline">Muat Semula</button>
+        <h2 class="text-sm font-semibold text-slate-300">Senarai Akaun Tersimpan</h2>
+        <button id="syncBtn" class="text-xs text-teal-400 hover:text-teal-300 font-medium">Segerak Cloud</button>
       </div>
-      <div id="recordsContainer" class="space-y-2">
-        <p class="text-xs text-slate-500 italic">Memuatkan senarai...</p>
+
+      <div id="recordsContainer" class="space-y-2.5">
+        <p class="text-xs text-slate-500 italic">Memuatkan data...</p>
       </div>
     </div>
 
   </div>
 
   <script>
-    // MASUKKAN URL WEB APP ANDA DI SINI
-    const API_URL = "AKfycbyreyrV-qAYe_EOrNGZFnp2dthtaAGaiOt5JWtWtJoiwzytRkglSuPC7BvjRa7Yv9YP";
+    const API_URL = "URL_GOOGLE_APPS_SCRIPT_ANDA";
 
-    const form = document.getElementById('vaultForm');
-    const masterKeyInput = document.getElementById('masterKey');
-    const recordsContainer = document.getElementById('recordsContainer');
-    const refreshBtn = document.getElementById('refreshBtn');
+    // Pendaftaran Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    }
 
-    // Simpan Rekod
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const masterKey = masterKeyInput.value.trim();
-      if (!masterKey) {
-        alert("Sila masukkan Master Key terlebih dahulu!");
+    // Status Internet
+    const networkStatusEl = document.getElementById('networkStatus');
+    const networkTextEl = document.getElementById('networkText');
+
+    function updateNetworkStatus() {
+      if (navigator.onLine) {
+        networkStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Dalam Talian</span>`;
+      } else {
+        networkStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>Luar Talian</span>`;
+      }
+    }
+    window.addEventListener('online', () => { updateNetworkStatus(); syncData(); });
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+
+    // Modul IndexedDB
+    const DB_NAME = 'DirectVaultDB';
+    const STORE_NAME = 'accounts';
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getLocalRecords() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function putLocalRecord(record) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(record);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function removeLocalRecord(id) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function replaceAllLocalRecords(records) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.clear();
+        records.forEach(r => store.put(r));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    // Toggle kata laluan borang
+    const passInput = document.getElementById('appPassword');
+    document.getElementById('togglePasswordVisibility').addEventListener('click', () => {
+      passInput.type = passInput.type === 'password' ? 'text' : 'password';
+    });
+
+    // Paparan Senarai Rekod
+    const container = document.getElementById('recordsContainer');
+
+    function renderRecords(records) {
+      container.innerHTML = '';
+      if (!records || records.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic">Tiada akaun disimpan.</p>`;
         return;
       }
 
+      records.forEach(rec => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-800/70 border border-slate-700/80 p-3.5 rounded-xl flex items-center justify-between";
+        card.innerHTML = `
+          <div class="space-y-1">
+            <p class="font-semibold text-sm text-slate-100">${escapeHtml(rec.appName)}</p>
+            <div class="text-xs text-slate-400">
+              ID: <span class="text-slate-200 font-mono select-all">${escapeHtml(rec.username)}</span>
+            </div>
+            <div class="text-xs text-slate-400 flex items-center space-x-2">
+              <span>Pass:</span>
+              <span id="pass-${rec.id}" class="font-mono text-teal-300 font-medium">${rec.password}</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="copyToClipboard('${escapeAttr(rec.password)}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-200">
+              Salin
+            </button>
+            <button onclick="handleDelete('${rec.id}')" class="px-2.5 py-1.5 bg-rose-950/40 border border-rose-900 text-rose-300 hover:bg-rose-900 rounded text-xs">
+              Padam
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Simpan Rekod
+    const form = document.getElementById('vaultForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
       const appName = document.getElementById('appName').value.trim();
       const username = document.getElementById('username').value.trim();
-      const plainPassword = document.getElementById('appPassword').value;
+      const password = document.getElementById('appPassword').value;
 
-      // Enkripsi AES di client-side
-      const encryptedPassword = CryptoJS.AES.encrypt(plainPassword, masterKey).toString();
+      const newId = 'rec_' + Date.now();
+      const record = { id: newId, appName, username, password, synced: false };
 
-      const btn = document.getElementById('saveBtn');
-      btn.disabled = true;
-      btn.innerText = "Menyimpan...";
+      // Simpan ke IndexedDB serta-merta
+      await putLocalRecord(record);
+      form.reset();
+      loadLocalData();
 
-      try {
-        await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "save", appName, username, encryptedPassword })
-        });
-
-        form.reset();
-        loadRecords();
-      } catch (err) {
-        alert("Gagal menyimpan rekod: " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Simpan Rekod";
+      // Cuba hantar terus ke Google Sheets jika online
+      if (navigator.onLine && API_URL !== "URL_GOOGLE_APPS_SCRIPT_ANDA") {
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'save', appName, username, password })
+          });
+        } catch (err) {
+          console.warn('Gagal hantar ke Sheets, data kekal di peranti:', err);
+        }
       }
     });
 
-    // Ambil & Papar Rekod
-    async function loadRecords() {
-      recordsContainer.innerHTML = `<p class="text-xs text-slate-500 italic">Mengambil data...</p>`;
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "list" })
-        });
-        const data = await res.json();
+    // Padam Rekod
+    async function handleDelete(id) {
+      if (!confirm("Padam rekod ini?")) return;
+      await removeLocalRecord(id);
+      loadLocalData();
 
-        if (!data.records || data.records.length === 0) {
-          recordsContainer.innerHTML = `<p class="text-xs text-slate-500 italic">Tiada rekod disimpan.</p>`;
-          return;
+      if (navigator.onLine && API_URL !== "URL_GOOGLE_APPS_SCRIPT_ANDA") {
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'delete', id })
+          });
+        } catch (err) {
+          console.warn('Gagal padam di Sheets:', err);
         }
-
-        renderList(data.records);
-      } catch (err) {
-        recordsContainer.innerHTML = `<p class="text-xs text-rose-400 italic">Ralat memuatkan rekod.</p>`;
       }
     }
 
-    function renderList(records) {
-      recordsContainer.innerHTML = "";
-      const masterKey = masterKeyInput.value.trim();
-
-      records.forEach(item => {
-        let displayPassword = "••••••••";
-        let isDecrypted = false;
-
-        if (masterKey) {
-          try {
-            const bytes = CryptoJS.AES.decrypt(item.encryptedPassword, masterKey);
-            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-            if (decrypted) {
-              displayPassword = decrypted;
-              isDecrypted = true;
-            }
-          } catch (_) {}
+    // Segerak Cloud dari Google Sheets
+    async function syncData() {
+      if (!navigator.onLine || API_URL === "URL_GOOGLE_APPS_SCRIPT_ANDA") return;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'list' })
+        });
+        const data = await res.json();
+        if (data.records) {
+          await replaceAllLocalRecords(data.records);
+          loadLocalData();
         }
-
-        const card = document.createElement('div');
-        card.className = "bg-slate-800/60 border border-slate-700/80 p-3 rounded-lg flex items-center justify-between";
-        card.innerHTML = `
-          <div class="space-y-1">
-            <p class="font-semibold text-sm text-slate-100">${escapeHtml(item.appName)}</p>
-            <p class="text-xs text-slate-400">ID: <span class="text-slate-300 font-mono">${escapeHtml(item.username)}</span></p>
-            <p class="text-xs text-slate-400">Pass: <span class="font-mono ${isDecrypted ? 'text-teal-300' : 'text-slate-500'}">${displayPassword}</span></p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button onclick="navigator.clipboard.writeText('${isDecrypted ? displayPassword : ''}')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[11px] text-slate-200">Salin</button>
-            <button onclick="deleteRecord('${item.id}')" class="px-2 py-1 bg-rose-950/60 border border-rose-900 text-rose-300 hover:bg-rose-900 rounded text-[11px]">Padam</button>
-          </div>
-        `;
-        recordsContainer.appendChild(card);
-      });
+      } catch (err) {
+        console.warn('Gagal segerak data:', err);
+      }
     }
 
-    async function deleteRecord(id) {
-      if (!confirm("Padam rekod ini?")) return;
-      await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "delete", id })
-      });
-      loadRecords();
+    async function loadLocalData() {
+      const records = await getLocalRecords();
+      renderRecords(records);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert("Kata laluan disalin!");
     }
 
     function escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    masterKeyInput.addEventListener('input', () => {
-      // Nyahsulit semula senarai sedia ada bila master key ditaip
-      loadRecords();
-    });
+    function escapeAttr(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
 
-    refreshBtn.addEventListener('click', loadRecords);
-    loadRecords();
+    document.getElementById('syncBtn').addEventListener('click', syncData);
+
+    // Muat data awal dari IndexedDB
+    loadLocalData();
+    syncData();
   </script>
 </body>
 </html>
