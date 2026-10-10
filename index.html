@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pengurus Kata Laluan PWA</title>
-  <link rel="manifest" href="manifest.json">
+  <title>Pengurus Kata Laluan</title>
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f172a">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6 font-sans antialiased pb-24 sm:pb-6">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6 font-sans antialiased pb-24 sm:pb-8">
   <div class="max-w-2xl mx-auto space-y-4">
 
     <!-- Header Utama -->
     <header class="flex items-center justify-between pb-3 border-b border-slate-800">
       <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-teal-400">Storan Akaun</h1>
-        <p class="text-xs text-slate-400">Senarai Akses Portal</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-teal-400">Pengurus Akaun</h1>
+        <p class="text-xs text-slate-400">Google Sheets Cloud & IndexedDB Cache</p>
       </div>
       <div class="flex items-center space-x-2">
-        <div id="networkStatus" class="flex items-center space-x-1.5 text-xs bg-slate-800/90 px-2.5 py-1 rounded-full border border-slate-700 text-slate-300">
+        <div id="networkStatus" class="flex items-center space-x-1.5 text-xs bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700 text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Dalam Talian</span>
+          <span id="networkText">Dalam Talian</span>
         </div>
         <button id="openModalBtn" type="button" class="inline-flex items-center space-x-1 bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs transition shadow-sm active:scale-95">
           <span>+ Tambah Akaun</span>
@@ -31,16 +31,17 @@
     <!-- Bar Carian & Butang Segerak -->
     <div class="flex items-center gap-2">
       <div class="relative flex-1">
-        <input type="text" id="searchInput" placeholder="Cari aplikasi atau ID..."
+        <input type="text" id="searchInput" placeholder="Cari nama akaun atau ID..."
           class="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 pl-9 text-xs sm:text-sm focus:outline-none focus:border-teal-400 text-slate-100 placeholder-slate-500" />
         <span class="absolute left-3 top-2.5 text-slate-500 text-xs">🔍</span>
       </div>
-      <button id="syncBtn" title="Segerak dengan Cloud" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs text-teal-400 font-medium transition flex items-center gap-1 shrink-0">
-        🔄 <span>Segerak</span>
+      <button id="syncBtn" type="button" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs text-teal-400 font-medium transition flex items-center gap-1 shrink-0">
+        <span id="syncIcon">🔄</span>
+        <span id="syncLabel">Segerak</span>
       </button>
     </div>
 
-    <!-- Senarai Kredensial -->
+    <!-- Senarai Akaun -->
     <main class="space-y-2">
       <div id="recordsContainer" class="space-y-2.5">
         <p class="text-xs text-slate-500 italic py-6 text-center">Memuatkan data akaun...</p>
@@ -54,7 +55,7 @@
     +
   </button>
 
-  <!-- Modal Popup: Tambah / Kemas Kini Rekod -->
+  <!-- Modal Popup: Tambah & Edit Rekod -->
   <div id="modalOverlay" style="display: none;" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
     <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-5 shadow-2xl relative space-y-4">
       
@@ -103,15 +104,14 @@
   </div>
 
   <script>
-    // URL Web App Google Apps Script
     const API_URL = "https://script.google.com/macros/s/AKfycbyreyrV-qAYe_EOrNGZFnp2dthtaAGaiOt5JWtWtJoiwzytRkglSuPC7BvjRa7Yv9YP/exec";
 
-    // Pendaftaran Service Worker PWA
+    // Pendaftaran Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(console.error);
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW failed:', err));
     }
 
-    // Elemen DOM Modal
+    // Kawalan Modal
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
     const openModalBtn = document.getElementById('openModalBtn');
@@ -137,17 +137,17 @@
     fabBtn.onclick = () => openModal(false);
     closeModalBtn.onclick = closeModal;
     cancelBtn.onclick = closeModal;
-    modalOverlay.addEventListener('click', (e) => {
+    modalOverlay.onclick = (e) => {
       if (e.target === modalOverlay) closeModal();
-    });
+    };
 
     // Toggle kata laluan borang modal
     const passInput = document.getElementById('appPassword');
-    document.getElementById('togglePasswordVisibility').addEventListener('click', () => {
+    document.getElementById('togglePasswordVisibility').onclick = () => {
       passInput.type = passInput.type === 'password' ? 'text' : 'password';
-    });
+    };
 
-    // Status Internet
+    // Status Rangkaian
     const networkStatusEl = document.getElementById('networkStatus');
     function updateNetworkStatus() {
       if (navigator.onLine) {
@@ -156,12 +156,12 @@
         networkStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>Luar Talian</span>`;
       }
     }
-    window.addEventListener('online', () => { updateNetworkStatus(); syncData(); });
+    window.addEventListener('online', () => { updateNetworkStatus(); syncData(true); });
     window.addEventListener('offline', updateNetworkStatus);
     updateNetworkStatus();
 
-    // Modul IndexedDB
-    const DB_NAME = 'DirectVaultDB';
+    // Modul IndexedDB (Cache Lokal)
+    const DB_NAME = 'VaultCloudStoreDB';
     const STORE_NAME = 'accounts';
 
     function openDB() {
@@ -220,7 +220,7 @@
       });
     }
 
-    // Pemapar Senarai & Carian
+    // Render Senarai
     let currentRecords = [];
     const container = document.getElementById('recordsContainer');
     const searchInput = document.getElementById('searchInput');
@@ -228,7 +228,7 @@
     function renderRecords(records) {
       container.innerHTML = '';
       if (!records || records.length === 0) {
-        container.innerHTML = `<div class="bg-slate-800/40 border border-dashed border-slate-700/80 rounded-xl p-8 text-center text-xs text-slate-400">Tiada akaun ditemui. Tekan butang <b>+ Tambah Akaun</b> untuk mula menyimpan.</div>`;
+        container.innerHTML = `<div class="bg-slate-800/40 border border-dashed border-slate-700/80 rounded-xl p-8 text-center text-xs text-slate-400">Tiada akaun ditemui. Tekan <b>+ Tambah Akaun</b> untuk mula menyimpan.</div>`;
         return;
       }
 
@@ -262,7 +262,8 @@
       });
     }
 
-    searchInput.addEventListener('input', (e) => {
+    // Tapis Carian
+    searchInput.oninput = (e) => {
       const q = e.target.value.toLowerCase().trim();
       if (!q) {
         renderRecords(currentRecords);
@@ -273,46 +274,67 @@
         (item.username && item.username.toLowerCase().includes(q))
       );
       renderRecords(filtered);
-    });
+    };
 
-    // Simpan / Kemas Kini Rekod
-    vaultForm.addEventListener('submit', async (e) => {
+    // Simpan Rekod (Hantar Cloud Dulu Baru Update Cache)
+    vaultForm.onsubmit = async (e) => {
       e.preventDefault();
+      const saveBtn = document.getElementById('saveBtn');
       const existingId = editRecordId.value;
       const appName = document.getElementById('appName').value.trim();
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('appPassword').value;
 
       const recordId = existingId || ('rec_' + Date.now());
-      const record = { id: recordId, appName, username, password };
+      const payload = {
+        action: existingId ? 'edit' : 'save',
+        id: recordId,
+        appName,
+        username,
+        password
+      };
 
-      // Simpan ke IndexedDB tempatan
-      await putLocalRecord(record);
-      closeModal();
-      await loadLocalData();
+      saveBtn.disabled = true;
+      saveBtn.innerText = "Menyimpan ke Cloud...";
 
-      // Hantar ke Google Apps Script
-      if (navigator.onLine) {
-        try {
-          await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ 
-              action: existingId ? 'edit' : 'save', 
-              id: recordId,
-              appName, 
-              username, 
-              password 
-            })
-          });
-        } catch (err) {
-          console.warn('Gagal hantar ke Sheets, kekal dalam storan peranti:', err);
+      try {
+        if (!navigator.onLine) {
+          throw new Error("Peranti berada di luar talian");
         }
-      }
-    });
 
-    // Edit Rekod
-    window.handleEdit = function(id) {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const resData = await res.json();
+        if (resData.status !== 'success') {
+          throw new Error(resData.message || 'Gagal menyimpan di Google Sheets');
+        }
+
+        // Simpan ke storan lokal
+        await putLocalRecord({ id: recordId, appName, username, password });
+        closeModal();
+        await loadLocalData();
+
+        // Segerak semula untuk pastikan semua peranti sepadan
+        await syncData(true);
+      } catch (err) {
+        console.warn('Ralat Cloud:', err);
+        // Fallback simpan secara lokal jika sambungan gagal
+        await putLocalRecord({ id: recordId, appName, username, password });
+        closeModal();
+        await loadLocalData();
+        alert("Disimpan ke storan tempatan peranti ini sahaja: " + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Simpan Kelayakan";
+      }
+    };
+
+    // Edit
+    window.handleEdit = (id) => {
       const rec = currentRecords.find(item => item.id === id);
       if (!rec) return;
 
@@ -323,9 +345,10 @@
       openModal(true);
     };
 
-    // Padam Rekod
-    window.handleDelete = async function(id) {
+    // Padam
+    window.handleDelete = async (id) => {
       if (!confirm("Padam kelayakan akaun ini?")) return;
+
       await removeLocalRecord(id);
       await loadLocalData();
 
@@ -337,39 +360,56 @@
             body: JSON.stringify({ action: 'delete', id })
           });
         } catch (err) {
-          console.warn('Gagal padam di Google Sheets:', err);
+          console.warn('Gagal memadam di Google Sheets:', err);
         }
       }
     };
 
-    // Ambil Data Tempatan
+    // Muat Turun Data Tempatan
     async function loadLocalData() {
       currentRecords = await getLocalRecords();
       renderRecords(currentRecords);
     }
 
-    // Segerak Cloud dari Google Sheets
-    async function syncData() {
-      if (!navigator.onLine) return;
+    // Fungsi Segerak Penuh dengan Google Sheets
+    async function syncData(silent = false) {
+      if (!navigator.onLine) {
+        if (!silent) alert("Peranti luar talian.");
+        return;
+      }
+
+      const syncBtn = document.getElementById('syncBtn');
+      const syncLabel = document.getElementById('syncLabel');
+      const syncIcon = document.getElementById('syncIcon');
+
+      if (syncLabel) syncLabel.innerText = "Menyegerak...";
+      if (syncIcon) syncIcon.classList.add('animate-spin');
+
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'list' })
         });
+
         const data = await res.json();
         if (data && data.records) {
           await replaceAllLocalRecords(data.records);
           await loadLocalData();
+          if (!silent) alert("Segerak selesai! (" + data.records.length + " rekod dimuat turun)");
         }
       } catch (err) {
-        console.warn('Ralat penyegerakan cloud:', err);
+        console.warn('Ralat penyegerakan:', err);
+        if (!silent) alert("Gagal menyegerak: " + err.message);
+      } finally {
+        if (syncLabel) syncLabel.innerText = "Segerak";
+        if (syncIcon) syncIcon.classList.remove('animate-spin');
       }
     }
 
-    window.copyToClipboard = function(text, label) {
+    window.copyToClipboard = (text, label) => {
       navigator.clipboard.writeText(text);
-      alert(`${label} berjaya disalin!`);
+      alert(`${label} disalin!`);
     };
 
     function escapeHtml(str) {
@@ -380,11 +420,10 @@
       return (str || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
     }
 
-    document.getElementById('syncBtn').addEventListener('click', syncData);
+    document.getElementById('syncBtn').onclick = () => syncData(false);
 
-    // Muat data awal
-    loadLocalData();
-    syncData();
+    // Mula aplikasi: muat lokal dulu, kemudian segerak cloud automatik
+    loadLocalData().then(() => syncData(true));
   </script>
 </body>
 </html>
