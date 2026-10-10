@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vault-cache-v2';
+const CACHE_NAME = 'vault-cache-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -8,13 +8,10 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      // Guna Promise.allSettled supaya tidak 'crash' jika ikon belum ada
       for (const asset of ASSETS) {
         try {
           await cache.add(asset);
-        } catch (err) {
-          console.warn('Gagal cache:', asset, err);
-        }
+        } catch (_) {}
       }
     })
   );
