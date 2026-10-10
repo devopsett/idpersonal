@@ -8,23 +8,21 @@
   <meta name="theme-color" content="#0f172a">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6 font-sans antialiased pb-20 sm:pb-6">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6 font-sans antialiased pb-24 sm:pb-6">
   <div class="max-w-2xl mx-auto space-y-4">
 
     <!-- Header Utama -->
     <header class="flex items-center justify-between pb-3 border-b border-slate-800">
       <div>
         <h1 class="text-xl sm:text-2xl font-bold text-teal-400">Pengurus Akaun</h1>
-        <p class="text-xs text-slate-400">Storan Peranti & Google Sheets</p>
+        <p class="text-xs text-slate-400">IndexedDB & Google Sheets</p>
       </div>
       <div class="flex items-center space-x-2">
-        <!-- Status Sambungan -->
         <div id="networkStatus" class="flex items-center space-x-1.5 text-xs bg-slate-800/90 px-2.5 py-1 rounded-full border border-slate-700 text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Dalam Talian</span>
         </div>
-        <!-- Butang Buka Modal -->
-        <button id="openModalBtn" class="hidden sm:inline-flex items-center space-x-1 bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs transition shadow-sm active:scale-95">
+        <button id="openModalBtn" type="button" class="inline-flex items-center space-x-1 bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg text-xs transition shadow-sm active:scale-95">
           <span>+ Tambah Akaun</span>
         </button>
       </div>
@@ -38,23 +36,72 @@
         <span class="absolute left-3 top-2.5 text-slate-500 text-xs">🔍</span>
       </div>
       <button id="syncBtn" title="Segerak dengan Cloud" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs text-teal-400 font-medium transition flex items-center gap-1 shrink-0">
-        🔄 <span class="hidden sm:inline">Segerak</span>
+        🔄 <span>Segerak</span>
       </button>
     </div>
 
-    <!-- Senarai Utama Kredensial -->
+    <!-- Senarai Kredensial -->
     <main class="space-y-2">
       <div id="recordsContainer" class="space-y-2.5">
-        <p class="text-xs text-slate-500 italic py-6 text-center">Memuatkan senarai kelayakan...</p>
+        <p class="text-xs text-slate-500 italic py-6 text-center">Memuatkan data akaun...</p>
       </div>
     </main>
 
   </div>
 
   <!-- Butang Terapung (FAB) untuk Mobile -->
-  <button id="fabBtn" class="sm:hidden fixed bottom-5 right-5 w-12 h-12 bg-teal-400 hover:bg-teal-500 text-slate-950 text-2xl font-bold rounded-full shadow-xl flex items-center justify-center transition active:scale-90 z-30">
+  <button id="fabBtn" type="button" class="sm:hidden fixed bottom-6 right-6 w-14 h-14 bg-teal-400 hover:bg-teal-500 text-slate-950 text-3xl font-bold rounded-full shadow-2xl flex items-center justify-center transition active:scale-90 z-30">
     +
   </button>
 
-  <!-- Modal Popup: Tambah Rekod Baharu -->
-  <div id="modalOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur
+  <!-- Modal Popup: Tambah / Kemas Kini Rekod -->
+  <div id="modalOverlay" style="display: none;" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-5 shadow-2xl relative space-y-4">
+      
+      <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
+        <h3 id="modalTitle" class="text-base font-semibold text-slate-100">Tambah Kelayakan Baharu</h3>
+        <button type="button" id="closeModalBtn" class="text-slate-400 hover:text-slate-200 text-xl font-bold px-2 py-0.5">✕</button>
+      </div>
+
+      <form id="vaultForm" class="space-y-3.5">
+        <input type="hidden" id="editRecordId" value="" />
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Nama Aplikasi / Servis</label>
+          <input type="text" id="appName" placeholder="cth: Maybank2u, GitHub, MyCar" required
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400 text-slate-100" />
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Username / ID / Emel</label>
+          <input type="text" id="username" placeholder="cth: user@domain.com" required
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400 text-slate-100" />
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Kata Laluan</label>
+          <div class="relative">
+            <input type="password" id="appPassword" placeholder="••••••••" required
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400 text-slate-100 pr-10" />
+            <button type="button" id="togglePasswordVisibility" class="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-slate-200">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="cancelBtn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-slate-200">
+            Batal
+          </button>
+          <button type="submit" id="saveBtn" class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold rounded-lg text-xs transition">
+            Simpan Kelayakan
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    // URL Web App Google Apps Script
+    const API_URL = "
