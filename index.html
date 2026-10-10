@@ -104,4 +104,287 @@
 
   <script>
     // URL Web App Google Apps Script
-    const API_URL = "
+    const API_URL = "https://script.google.com/macros/s/AKfycbyreyrV-qAYe_EOrNGZFnp2dthtaAGaiOt5JWtWtJoiwzytRkglSuPC7BvjRa7Yv9YP/exec";
+
+    // Pendaftaran Service Worker PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    }
+
+    // Elemen DOM Modal
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const fabBtn = document.getElementById('fabBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const vaultForm = document.getElementById('vaultForm');
+    const editRecordId = document.getElementById('editRecordId');
+
+    function openModal(isEdit = false) {
+      modalTitle.innerText = isEdit ? "Kemaskini Kelayakan" : "Tambah Kelayakan Baharu";
+      modalOverlay.style.display = 'flex';
+      setTimeout(() => document.getElementById('appName').focus(), 50);
+    }
+
+    function closeModal() {
+      modalOverlay.style.display = 'none';
+      vaultForm.reset();
+      editRecordId.value = '';
+    }
+
+    openModalBtn.onclick = () => openModal(false);
+    fabBtn.onclick = () => openModal(false);
+    closeModalBtn.onclick = closeModal;
+    cancelBtn.onclick = closeModal;
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    // Toggle kata laluan borang modal
+    const passInput = document.getElementById('appPassword');
+    document.getElementById('togglePasswordVisibility').addEventListener('click', () => {
+      passInput.type = passInput.type === 'password' ? 'text' : 'password';
+    });
+
+    // Status Internet
+    const networkStatusEl = document.getElementById('networkStatus');
+    function updateNetworkStatus() {
+      if (navigator.onLine) {
+        networkStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>Dalam Talian</span>`;
+      } else {
+        networkStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>Luar Talian</span>`;
+      }
+    }
+    window.addEventListener('online', () => { updateNetworkStatus(); syncData(); });
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+
+    // Modul IndexedDB
+    const DB_NAME = 'DirectVaultDB';
+    const STORE_NAME = 'accounts';
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getLocalRecords() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function putLocalRecord(record) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(record);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function removeLocalRecord(id) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function replaceAllLocalRecords(records) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.clear();
+        records.forEach(r => store.put(r));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    // Pemapar Senarai & Carian
+    let currentRecords = [];
+    const container = document.getElementById('recordsContainer');
+    const searchInput = document.getElementById('searchInput');
+
+    function renderRecords(records) {
+      container.innerHTML = '';
+      if (!records || records.length === 0) {
+        container.innerHTML = `<div class="bg-slate-800/40 border border-dashed border-slate-700/80 rounded-xl p-8 text-center text-xs text-slate-400">Tiada akaun ditemui. Tekan butang <b>+ Tambah Akaun</b> untuk mula menyimpan.</div>`;
+        return;
+      }
+
+      records.forEach(rec => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 p-3.5 rounded-xl flex items-center justify-between gap-3 shadow-sm transition";
+        card.innerHTML = `
+          <div class="space-y-1 min-w-0 flex-1">
+            <p class="font-semibold text-sm text-teal-300 truncate">${escapeHtml(rec.appName)}</p>
+            <div class="text-xs text-slate-400 truncate">
+              ID: <span class="text-slate-200 font-mono select-all">${escapeHtml(rec.username)}</span>
+            </div>
+            <div class="text-xs text-slate-400 flex items-center gap-2">
+              <span>Pass:</span>
+              <span class="font-mono text-emerald-400 font-medium select-all">${escapeHtml(rec.password)}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="copyToClipboard('${escapeAttr(rec.password)}', 'Kata laluan')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-slate-200 transition">
+              Salin
+            </button>
+            <button onclick="handleEdit('${rec.id}')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-amber-300 transition">
+              Edit
+            </button>
+            <button onclick="handleDelete('${rec.id}')" class="px-2.5 py-1.5 bg-rose-950/40 border border-rose-900/80 text-rose-300 hover:bg-rose-900/60 rounded-lg text-xs transition">
+              Padam
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) {
+        renderRecords(currentRecords);
+        return;
+      }
+      const filtered = currentRecords.filter(item => 
+        (item.appName && item.appName.toLowerCase().includes(q)) ||
+        (item.username && item.username.toLowerCase().includes(q))
+      );
+      renderRecords(filtered);
+    });
+
+    // Simpan / Kemas Kini Rekod
+    vaultForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const existingId = editRecordId.value;
+      const appName = document.getElementById('appName').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('appPassword').value;
+
+      const recordId = existingId || ('rec_' + Date.now());
+      const record = { id: recordId, appName, username, password };
+
+      // Simpan ke IndexedDB tempatan
+      await putLocalRecord(record);
+      closeModal();
+      await loadLocalData();
+
+      // Hantar ke Google Apps Script
+      if (navigator.onLine) {
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ 
+              action: existingId ? 'edit' : 'save', 
+              id: recordId,
+              appName, 
+              username, 
+              password 
+            })
+          });
+        } catch (err) {
+          console.warn('Gagal hantar ke Sheets, kekal dalam storan peranti:', err);
+        }
+      }
+    });
+
+    // Edit Rekod
+    window.handleEdit = function(id) {
+      const rec = currentRecords.find(item => item.id === id);
+      if (!rec) return;
+
+      editRecordId.value = rec.id;
+      document.getElementById('appName').value = rec.appName || '';
+      document.getElementById('username').value = rec.username || '';
+      document.getElementById('appPassword').value = rec.password || '';
+      openModal(true);
+    };
+
+    // Padam Rekod
+    window.handleDelete = async function(id) {
+      if (!confirm("Padam kelayakan akaun ini?")) return;
+      await removeLocalRecord(id);
+      await loadLocalData();
+
+      if (navigator.onLine) {
+        try {
+          await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'delete', id })
+          });
+        } catch (err) {
+          console.warn('Gagal padam di Google Sheets:', err);
+        }
+      }
+    };
+
+    // Ambil Data Tempatan
+    async function loadLocalData() {
+      currentRecords = await getLocalRecords();
+      renderRecords(currentRecords);
+    }
+
+    // Segerak Cloud dari Google Sheets
+    async function syncData() {
+      if (!navigator.onLine) return;
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'list' })
+        });
+        const data = await res.json();
+        if (data && data.records) {
+          await replaceAllLocalRecords(data.records);
+          await loadLocalData();
+        }
+      } catch (err) {
+        console.warn('Ralat penyegerakan cloud:', err);
+      }
+    }
+
+    window.copyToClipboard = function(text, label) {
+      navigator.clipboard.writeText(text);
+      alert(`${label} berjaya disalin!`);
+    };
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function escapeAttr(str) {
+      return (str || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+
+    document.getElementById('syncBtn').addEventListener('click', syncData);
+
+    // Muat data awal
+    loadLocalData();
+    syncData();
+  </script>
+</body>
+</html>
