@@ -2,1117 +2,193 @@
 <html lang="ms">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>PocketVault Pro • Offline & Cloud Sync</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#030712">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <style>
-    :root {
-      --bg: #030712;
-      --card-glass: rgba(15, 23, 42, 0.7);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.25);
-      --emerald: #10b981;
-      --amber: #f59e0b;
-      --rose: #f43f5e;
-      --purple: #a855f7;
-      --text: #f9fafb;
-      --text-muted: #94a3b8;
-      --radius-xl: 24px;
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --safe-top: env(safe-area-inset-top, 16px);
-      --safe-bottom: env(safe-area-inset-bottom, 16px);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      background-image: 
-        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 85% 90%, rgba(168, 85, 247, 0.1) 0%, transparent 45%);
-      background-attachment: fixed;
-    }
-
-    .app-wrapper {
-      width: 100%;
-      max-width: 450px;
-      padding: calc(0.75rem + var(--safe-top)) 1rem calc(5.5rem + var(--safe-bottom)) 1rem;
-      position: relative;
-    }
-
-    .glass-box {
-      background: var(--card-glass);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid var(--card-border);
-    }
-
-    .top-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-
-    .brand-title {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .net-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    .net-online { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .net-offline { background: rgba(244, 63, 94, 0.15); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
-    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .pulse-online { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
-    .pulse-offline { background: var(--rose); box-shadow: 0 0 8px var(--rose); }
-
-    .hero-stat-card {
-      border-radius: var(--radius-xl);
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .stat-flex {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-
-    .stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; }
-    .stat-value { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1.1; margin-top: 4px; }
-
-    .cat-scroll-container {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 0.4rem;
-      margin-bottom: 1.2rem;
-      scrollbar-width: none;
-    }
-    .cat-scroll-container::-webkit-scrollbar { display: none; }
-
-    .cat-pill {
-      white-space: nowrap;
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      background: rgba(255, 255, 255, 0.04);
-      color: var(--text-muted);
-      border: 1px solid var(--card-border);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .cat-pill.active {
-      background: #fff;
-      color: #030712;
-      border-color: #fff;
-      box-shadow: 0 4px 14px rgba(255, 255, 255, 0.25);
-    }
-
-    .vault-card {
-      border-radius: var(--radius-xl);
-      padding: 1.25rem;
-      margin-bottom: 1.2rem;
-      position: relative;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    }
-
-    .card-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-
-    .cat-tag {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 6px;
-    }
-
-    .tag-ic { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); }
-    .tag-license { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .tag-car { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .tag-bank { background: rgba(168, 85, 247, 0.15); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.3); }
-
-    .expiry-tag {
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-    }
-    .exp-safe { background: rgba(16, 185, 129, 0.15); color: var(--emerald); }
-    .exp-warning { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid var(--amber); }
-    .exp-danger { background: rgba(244, 63, 94, 0.15); color: var(--rose); border: 1px solid var(--rose); }
-
-    .doc-main-title { font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; }
-
-    .id-number-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 8px 12px;
-      border-radius: var(--radius-md);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.92rem;
-      color: #cbd5e1;
-      margin-bottom: 0.8rem;
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      cursor: pointer;
-    }
-
-    .preview-main-box {
-      width: 100%;
-      height: 200px;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      background: #000;
-      position: relative;
-      border: 1px solid var(--card-border);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .preview-main-box img { width: 100%; height: 100%; object-fit: cover; }
-
-    .file-counter-pill {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      color: #fff;
-      border: 1px solid var(--card-border);
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      z-index: 10;
-    }
-
-    .thumb-scroll-row {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      margin-top: 8px;
-      margin-bottom: 0.8rem;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-    .thumb-scroll-row::-webkit-scrollbar { display: none; }
-
-    .mini-thumb {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      object-fit: cover;
-      border: 2px solid transparent;
-      cursor: pointer;
-      background: #000;
-      flex-shrink: 0;
-      opacity: 0.6;
-      transition: all 0.2s;
-    }
-    .mini-thumb.active { border-color: var(--accent); opacity: 1; transform: scale(1.05); }
-
-    .mini-thumb-pdf {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      border: 2px solid transparent;
-      background: rgba(255, 255, 255, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      cursor: pointer;
-      flex-shrink: 0;
-      opacity: 0.6;
-    }
-    .mini-thumb-pdf.active { border-color: var(--accent); opacity: 1; }
-
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 0.6rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .ghost-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      text-decoration: none;
-    }
-
-    .dock-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 0.75rem 1rem calc(0.75rem + var(--safe-bottom)) 1rem;
-      display: flex;
-      justify-content: center;
-      background: rgba(3, 7, 18, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--card-border);
-      z-index: 40;
-    }
-
-    .dock-inner-box {
-      width: 100%;
-      max-width: 450px;
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-main-action {
-      flex: 1;
-      background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
-      color: #fff;
-      border: none;
-      padding: 0.95rem;
-      border-radius: 16px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 20px var(--accent-glow);
-    }
-
-    .btn-icon-dock {
-      width: 50px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.1rem;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--card-border);
-      color: #fff;
-      padding: 0.85rem 1rem;
-      border-radius: var(--radius-md);
-      font-size: 0.92rem;
-      margin-bottom: 0.8rem;
-      outline: none;
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      z-index: 100;
-      display: flex;
-      align-items: flex-end;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-
-    .modal-overlay.active { opacity: 1; pointer-events: auto; }
-
-    .modal-sheet-box {
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      background: #0b1120;
-      border-radius: 28px 28px 0 0;
-      border-top: 1px solid var(--card-border);
-      padding: 1.5rem 1.25rem calc(1.5rem + var(--safe-bottom)) 1.25rem;
-      max-height: 90vh;
-      overflow-y: auto;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .modal-overlay.active .modal-sheet-box { transform: translateY(0); }
-    .hidden { display: none !important; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password & Credential Vault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 sm:p-6">
+  <div class="max-w-xl mx-auto space-y-6">
+    
+    <header class="border-b border-slate-800 pb-4">
+      <h1 class="text-2xl font-bold text-teal-400">Credential Vault</h1>
+      <p class="text-xs text-slate-400 mt-1">Disulitkan dengan AES sebelum dihantar ke Google Sheets</p>
+    </header>
 
-<div class="app-wrapper">
-
-  <!-- Skrin Kunci & Setup -->
-  <div id="authScreen" style="min-height: 85vh; display: flex; flex-direction: column; justify-content: center;">
-    <div class="glass-box" style="border-radius: var(--radius-xl); padding: 2.25rem 1.5rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
-      <div style="width: 64px; height: 64px; background: rgba(56,189,248,0.1); border: 1px solid var(--card-border); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem auto; font-size: 2rem;">
-        🛡️
-      </div>
-      <h1 class="brand-title" id="authTitle" style="font-size: 1.6rem; margin-bottom: 0.3rem;">PocketVault Pro</h1>
-      <p id="authDesc" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.8rem; line-height: 1.4;">
-        Enkripsi AES-256 tempatan. Akses penuh Offline & Cloud Sync.
-      </p>
-
-      <div id="loginFormSection">
-        <input type="password" id="masterKeyInput" placeholder="Master Password" style="text-align: center; letter-spacing: 0.15em;" autocomplete="current-password">
-        <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="unlockVault()">Buka Vault</button>
-      </div>
-
-      <div id="setupFormSection" class="hidden">
-        <input type="password" id="newMasterKeyInput" placeholder="Cipta Master Password Baharu" style="text-align: center;">
-        <input type="password" id="confirmMasterKeyInput" placeholder="Sahkan Master Password" style="text-align: center;">
-        <button class="btn-main-action" style="width: 100%; margin-top: 0.4rem;" onclick="setupNewMasterKey()">Tetapkan & Cipta Vault</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dashboard Utama -->
-  <div id="mainDashboard" class="hidden">
-    <div class="top-header">
-      <div>
-        <h1 class="brand-title">PocketVault</h1>
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Offline & Cloud Sync Hub</div>
-      </div>
-      <div style="display: flex; gap: 6px; align-items: center;">
-        <span id="networkStatusBadge" class="net-badge net-online">
-          <span id="networkDot" class="pulse-dot pulse-online"></span>
-          <span id="networkText">Online</span>
-        </span>
-        <button class="btn-icon-dock" style="width: 38px; height: 38px; border-radius: 50%; color: var(--rose); background: rgba(244,63,94,0.1);" onclick="lockVault()" title="Kunci">🔒</button>
-      </div>
+    <!-- Master Key Input -->
+    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+      <label class="block text-xs uppercase tracking-wider text-slate-400 mb-2">Master Key (Kunci Enkripsi)</label>
+      <input type="password" id="masterKey" placeholder="Masukkan kunci rahsia anda..." 
+        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+      <span class="text-[11px] text-amber-400/90 mt-1 block">*Kata laluan disimpan tanpa kunci ini. Simpan kunci dengan selamat.</span>
     </div>
 
-    <!-- Ringkasan Statistik -->
-    <div class="hero-stat-card glass-box">
-      <div class="stat-flex">
-        <div>
-          <div class="stat-label">Dokumen Tersimpan</div>
-          <div class="stat-value" id="totalDocsCounter">0</div>
-        </div>
-        <div style="text-align: right;">
-          <button class="btn-icon-dock" style="width: auto; padding: 6px 12px; font-size: 0.75rem; border-radius: 8px;" onclick="openModal('cloudModal')">☁️ Sync Cloud</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Carian -->
-    <input type="text" id="searchInput" placeholder="🔍 Cari ID, Lesen, Dokumen..." oninput="renderDocuments()" style="border-radius: 14px; margin-bottom: 1rem;">
-
-    <!-- Penapis Kategori -->
-    <div class="cat-scroll-container">
-      <button class="cat-pill active" onclick="setCategoryFilter('Semua', this)">Semua</button>
-      <button class="cat-pill" onclick="setCategoryFilter('Kad Pengenalan (IC)', this)">Kad Pengenalan</button>
-      <button class="cat-pill" onclick="setCategoryFilter('Lesen Memandu', this)">Lesen Memandu</button>
-      <button class="cat-pill" onclick="setCategoryFilter('Kenderaan / Roadtax', this)">Kenderaan</button>
-      <button class="cat-pill" onclick="setCategoryFilter('Kad Bank', this)">Kad Bank</button>
-      <button class="cat-pill" onclick="setCategoryFilter('Lain-lain', this)">Lain-lain</button>
-    </div>
-
-    <div id="docsList"></div>
-  </div>
-
-</div>
-
-<!-- Bottom Dock Navigation -->
-<div id="dockNav" class="dock-bar hidden">
-  <div class="dock-inner-box">
-    <button class="btn-main-action" onclick="openModal('addModal')">
-      <span>＋ Tambah Dokumen Baru</span>
-    </button>
-    <button class="btn-icon-dock" onclick="openModal('cloudModal')" title="Penyelarasan Awan">
-      ☁️
-    </button>
-    <button class="btn-icon-dock" onclick="openModal('settingsModal')" title="Tetapan">
-      ⚙️
-    </button>
-  </div>
-</div>
-
-<!-- Modal Tambah Dokumen -->
-<div id="addModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'addModal')">
-  <div class="modal-sheet-box">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Muat Naik Dokumen</h3>
-      <button onclick="closeModal('addModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Kategori</label>
-    <select id="docCategory">
-      <option value="Kad Pengenalan (IC)">Kad Pengenalan (IC)</option>
-      <option value="Lesen Memandu">Lesen Memandu</option>
-      <option value="Kenderaan / Roadtax">Kenderaan / Cukai Jalan</option>
-      <option value="Kad Bank">Kad Bank / Debit</option>
-      <option value="Lain-lain">Dokumen Rasmi / Surat</option>
-    </select>
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Label / Tajuk Kad</label>
-    <input type="text" id="docTitle" placeholder="Contoh: MyKad & Lesen / Salinan Dokumen">
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nombor ID / No. Kad</label>
-    <input type="text" id="docIdentifier" placeholder="Contoh: 020216-11-XXXX">
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Tarikh Luput (Pilihan)</label>
-    <input type="date" id="docExpiry">
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Pilih Fail (Boleh Pilih Banyak Fail: Imej/PDF)</label>
-    <input type="file" id="docFilesInput" accept="image/*,application/pdf" multiple>
-
-    <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Nota Catatan</label>
-    <textarea id="docNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
-
-    <button class="btn-main-action" style="width: 100%; margin-top: 0.5rem;" id="saveBtn" onclick="saveDocument()">Enkrip & Simpan ke Memori</button>
-  </div>
-</div>
-
-<!-- Modal Cloud Sync (Google Drive) -->
-<div id="cloudModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'cloudModal')">
-  <div class="modal-sheet-box">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Cloud Sync (Google Drive) ☁️</h3>
-      <button onclick="closeModal('cloudModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
-      Salinan data tersulit anda dihantar terus ke Google Drive peribadi secara selamat tanpa menjejaskan akses luar talian (offline).
-    </p>
-
-    <button class="btn-main-action" style="width: 100%; margin-bottom: 0.8rem;" onclick="syncUploadToCloud()">
-      ⬆️ Muat Naik Sandaran ke Drive
-    </button>
-    <button class="btn-main-action" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); box-shadow: none;" onclick="syncDownloadFromCloud()">
-      ⬇️ Muat Turun Data dari Drive
-    </button>
-    <div id="cloudSyncStatus" style="font-size: 0.8rem; color: var(--accent); text-align: center; margin-top: 0.8rem;"></div>
-  </div>
-</div>
-
-<!-- Modal Tetapan -->
-<div id="settingsModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'settingsModal')">
-  <div class="modal-sheet-box">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Tetapan</h3>
-      <button onclick="closeModal('settingsModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-
-    <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--card-border); margin-bottom: 1.2rem;">
-      <h4 style="font-size: 0.95rem; color: var(--accent); margin-bottom: 0.6rem;">🔑 Tukar Master Password</h4>
-      <input type="password" id="oldPasswordInput" placeholder="Master Password Semasa">
-      <input type="password" id="newPasswordChangeInput" placeholder="Master Password Baharu">
-      <input type="password" id="confirmPasswordChangeInput" placeholder="Sahkan Password Baharu">
-      <button class="btn-main-action" style="width: 100%; font-size: 0.85rem; padding: 0.75rem;" onclick="changeMasterPassword()">Kemas Kini Kata Laluan</button>
-    </div>
-
-    <h4 style="font-size: 0.95rem; color: #fff; margin-bottom: 0.5rem;">📁 Sandaran Manual (.JSON)</h4>
-    <button class="btn-main-action" style="width: 100%; margin-bottom: 0.8rem;" onclick="exportVaultBackup()">Muat Turun Fail Sandaran</button>
-    <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importVaultBackup(event)">
-    <button class="btn-main-action" style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid var(--card-border); box-shadow: none;" onclick="document.getElementById('importFileInput').click()">Pulihkan Sandaran Fail</button>
-  </div>
-</div>
-
-<!-- Modal Viewer -->
-<div id="viewModal" class="modal-overlay" onclick="closeOnBackdrop(event, 'viewModal')">
-  <div class="modal-sheet-box" style="height: 90vh;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-      <h4 id="viewTitle" style="color: #fff; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></h4>
-      <button onclick="closeModal('viewModal')" style="background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-    <div id="viewBody" style="width: 100%; height: calc(100% - 50px); display: flex; align-items: center; justify-content: center;"></div>
-  </div>
-</div>
-
-<script>
-  // =============================================================
-  // MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI
-  // =============================================================
-  const GAS_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwGsw3pR-C9gZEYrCl8mfyjCSmg3lNHRkMFvRm3eoq-K60jD0LYIxCqwr4Vu9mb8VLXOw/exec";
-
-  let sessionKey = null;
-  let decryptedDocs = [];
-  let currentFilterCategory = 'Semua';
-  let activePreviewIndices = {};
-  let inactivityTimer = null;
-  const INACTIVITY_TIMEOUT = 2 * 60 * 1000;
-
-  const DB_NAME = 'PocketVaultProDB';
-  const STORE_NAME = 'docs_v3';
-
-  // --- Network Detector ---
-  function updateNetworkStatus() {
-    const badge = document.getElementById('networkStatusBadge');
-    const dot = document.getElementById('networkDot');
-    const text = document.getElementById('networkText');
-
-    if (navigator.onLine) {
-      badge.className = "net-badge net-online";
-      dot.className = "pulse-dot pulse-online";
-      text.innerText = "Online";
-    } else {
-      badge.className = "net-badge net-offline";
-      dot.className = "pulse-dot pulse-offline";
-      text.innerText = "Offline";
-    }
-  }
-
-  window.addEventListener('online', updateNetworkStatus);
-  window.addEventListener('offline', updateNetworkStatus);
-
-  // --- IndexedDB ---
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function getVaultPayload() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get('vault_payload');
-      req.onsuccess = () => resolve(req.result ? req.result.payload : null);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function setVaultPayload(payload) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const req = tx.objectStore(STORE_NAME).put({ id: 'vault_payload', payload: payload });
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  // --- Web Crypto (AES-256 GCM) ---
-  async function deriveKey(password, salt) {
-    const enc = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
-    return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
-      keyMaterial,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["encrypt", "decrypt"]
-    );
-  }
-
-  async function encryptData(plainText, password) {
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const key = await deriveKey(password, salt);
-    const enc = new TextEncoder();
-    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(plainText));
-    return JSON.stringify({ salt: Array.from(salt), iv: Array.from(iv), data: Array.from(new Uint8Array(ciphertext)) });
-  }
-
-  async function decryptData(cipherPackage, password) {
-    const pkg = typeof cipherPackage === 'string' ? JSON.parse(cipherPackage) : cipherPackage;
-    const key = await deriveKey(password, new Uint8Array(pkg.salt));
-    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(pkg.iv) }, key, new Uint8Array(pkg.data));
-    return new TextDecoder().decode(decrypted);
-  }
-
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve({ dataUrl: reader.result, name: file.name, type: file.type });
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  // --- Auto-Lock ---
-  function resetInactivityTimer() {
-    if (!sessionKey) return;
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      lockVault();
-      alert("Aplikasi dikunci automatik (2 minit tidak aktif).");
-    }, INACTIVITY_TIMEOUT);
-  }
-
-  ['touchstart', 'mousemove', 'keydown', 'scroll'].forEach(evt => {
-    window.addEventListener(evt, resetInactivityTimer, true);
-  });
-
-  // --- Auth Flow ---
-  async function checkInitialVaultStatus() {
-    updateNetworkStatus();
-    const raw = await getVaultPayload();
-    if (!raw) {
-      document.getElementById('authTitle').innerText = "Cipta PocketVault";
-      document.getElementById('authDesc').innerText = "Tetapkan Master Password pertama anda untuk melindungi dokumen.";
-      document.getElementById('loginFormSection').classList.add('hidden');
-      document.getElementById('setupFormSection').classList.remove('hidden');
-    } else {
-      document.getElementById('authTitle').innerText = "PocketVault Pro";
-      document.getElementById('authDesc').innerText = "Enkripsi AES-256 luar talian. Masukkan Master Password untuk membuka akses.";
-      document.getElementById('loginFormSection').classList.remove('hidden');
-      document.getElementById('setupFormSection').classList.add('hidden');
-    }
-  }
-
-  async function setupNewMasterKey() {
-    const p1 = document.getElementById('newMasterKeyInput').value;
-    const p2 = document.getElementById('confirmMasterKeyInput').value;
-
-    if (!p1 || p1.length < 4) return alert("Sila cipta kata laluan sekurang-kurangnya 4 aksara.");
-    if (p1 !== p2) return alert("Pengesahan kata laluan tidak sepadan!");
-
-    sessionKey = p1;
-    decryptedDocs = [];
-    const encrypted = await encryptData(JSON.stringify([]), sessionKey);
-    await setVaultPayload(encrypted);
-
-    document.getElementById('newMasterKeyInput').value = '';
-    document.getElementById('confirmMasterKeyInput').value = '';
-    showApp();
-  }
-
-  async function unlockVault() {
-    const pwd = document.getElementById('masterKeyInput').value;
-    if (!pwd) return alert("Sila masukkan Master Password.");
-
-    const raw = await getVaultPayload();
-    if (!raw) {
-      checkInitialVaultStatus();
-      return;
-    }
-
-    try {
-      const decryptedStr = await decryptData(raw, pwd);
-      decryptedDocs = JSON.parse(decryptedStr);
+    <!-- Borang Tambah Rekod -->
+    <form id="vaultForm" class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-3">
+      <h2 class="text-sm font-semibold text-slate-200">Tambah Kelayakan Baharu</h2>
       
-      decryptedDocs.forEach(d => {
-        if (!d.files) {
-          d.files = [];
-          if (d.frontFile) d.files.push(d.frontFile);
-          if (d.backFile) d.files.push(d.backFile);
-          delete d.frontFile;
-          delete d.backFile;
-        }
-      });
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Nama Aplikasi / Servis</label>
+        <input type="text" id="appName" placeholder="cth: Maybank2u, Gmail, GitHub" required
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+      </div>
 
-      sessionKey = pwd;
-      showApp();
-    } catch (err) {
-      alert("Master Password tidak tepat!");
-    }
-  }
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Username / ID / Emel</label>
+        <input type="text" id="username" placeholder="cth: user@gmail.com" required
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+      </div>
 
-  function showApp() {
-    document.getElementById('authScreen').classList.add('hidden');
-    document.getElementById('mainDashboard').classList.remove('hidden');
-    document.getElementById('dockNav').classList.remove('hidden');
-    resetInactivityTimer();
-    renderDocuments();
-  }
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Kata Laluan</label>
+        <input type="password" id="appPassword" placeholder="••••••••" required
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-teal-400" />
+      </div>
 
-  function lockVault() {
-    sessionKey = null;
-    decryptedDocs = [];
-    activePreviewIndices = {};
-    clearTimeout(inactivityTimer);
-    document.getElementById('masterKeyInput').value = '';
-    document.getElementById('mainDashboard').classList.add('hidden');
-    document.getElementById('dockNav').classList.add('hidden');
-    document.getElementById('authScreen').classList.remove('hidden');
-    checkInitialVaultStatus();
-  }
+      <button type="submit" id="saveBtn"
+        class="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-semibold py-2 rounded-lg text-sm transition">
+        Simpan Rekod
+      </button>
+    </form>
 
-  // --- Cloud Sync Handlers ---
-  async function syncUploadToCloud() {
-    if (!navigator.onLine) return alert("Tiada sambungan internet untuk Cloud Sync!");
-    if (!GAS_ENDPOINT_URL || GAS_ENDPOINT_URL.includes("URL_GOOGLE_APPS_SCRIPT")) {
-      return alert("Sila masukkan URL Web App Google Apps Script anda yang sah (berakhir dengan /exec).");
-    }
+    <!-- Senarai Rekod -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-slate-200">Senarai Tersimpan</h2>
+        <button id="refreshBtn" class="text-xs text-teal-400 hover:underline">Muat Semula</button>
+      </div>
+      <div id="recordsContainer" class="space-y-2">
+        <p class="text-xs text-slate-500 italic">Memuatkan senarai...</p>
+      </div>
+    </div>
 
-    const statusEl = document.getElementById('cloudSyncStatus');
-    statusEl.innerText = "Menghantar sandaran ke Google Drive...";
+  </div>
 
-    const rawPayload = await getVaultPayload();
-    if (!rawPayload) return alert("Tiada data untuk diselaraskan.");
+  <script>
+    // MASUKKAN URL WEB APP ANDA DI SINI
+    const API_URL = "URL_GOOGLE_APPS_SCRIPT_ANDA";
 
-    try {
-      const res = await fetch(GAS_ENDPOINT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "upload_backup",
-          payload: rawPayload
-        })
-      });
+    const form = document.getElementById('vaultForm');
+    const masterKeyInput = document.getElementById('masterKey');
+    const recordsContainer = document.getElementById('recordsContainer');
+    const refreshBtn = document.getElementById('refreshBtn');
 
-      const textResponse = await res.text();
-      if (textResponse.trim().startsWith("<")) {
-        throw new Error("Kebenaran gagal! Sila pastikan Web App diset kepada 'Anyone' di Google Apps Script.");
+    // Simpan Rekod
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const masterKey = masterKeyInput.value.trim();
+      if (!masterKey) {
+        alert("Sila masukkan Master Key terlebih dahulu!");
+        return;
       }
 
-      const data = JSON.parse(textResponse);
-      statusEl.innerText = data.message || "Berjaya sync ke Drive!";
-      alert(data.message);
-    } catch (e) {
-      statusEl.innerText = "Gagal memuat naik: " + e.message;
-      alert("Ralat Sync: " + e.message);
-    }
-  }
+      const appName = document.getElementById('appName').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const plainPassword = document.getElementById('appPassword').value;
 
-  async function syncDownloadFromCloud() {
-    if (!navigator.onLine) return alert("Tiada sambungan internet!");
-    if (!confirm("Muat turun data terkini dari Drive? Data dalam peranti ini akan diselaraskan semula.")) return;
+      // Enkripsi AES di client-side
+      const encryptedPassword = CryptoJS.AES.encrypt(plainPassword, masterKey).toString();
 
-    const statusEl = document.getElementById('cloudSyncStatus');
-    statusEl.innerText = "Mengambil data dari Google Drive...";
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.innerText = "Menyimpan...";
 
-    try {
-      const res = await fetch(GAS_ENDPOINT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "fetch_backup" })
-      });
-
-      const textResponse = await res.text();
-      if (textResponse.trim().startsWith("<")) {
-        throw new Error("Kebenaran gagal! Sila pastikan Web App diset kepada 'Anyone' di Google Apps Script.");
-      }
-
-      const data = JSON.parse(textResponse);
-
-      if (data.status === "success") {
-        const decryptedStr = await decryptData(data.payload, sessionKey);
-        decryptedDocs = JSON.parse(decryptedStr);
-        await setVaultPayload(data.payload);
-        renderDocuments();
-        statusEl.innerText = "Data berjaya dimuat turun & diselaraskan!";
-        alert("Pangkalan data berjaya diselaraskan dari Google Drive!");
-      } else {
-        statusEl.innerText = data.message;
-        alert(data.message);
-      }
-    } catch (e) {
-      statusEl.innerText = "Gagal: " + e.message;
-      alert("Ralat: " + e.message);
-    }
-  }
-
-  // --- Document Operations ---
-  async function saveDocument() {
-    const category = document.getElementById('docCategory').value;
-    const title = document.getElementById('docTitle').value.trim();
-    const identifier = document.getElementById('docIdentifier').value.trim();
-    const expiry = document.getElementById('docExpiry').value;
-    const notes = document.getElementById('docNotes').value.trim();
-    const filesInput = document.getElementById('docFilesInput');
-
-    if (!title) return alert("Sila masukkan tajuk dokumen.");
-    if (filesInput.files.length === 0) return alert("Sila pilih sekurang-kurangnya satu fail.");
-
-    const filesArray = [];
-    for (let i = 0; i < filesInput.files.length; i++) {
-      const fileData = await fileToBase64(filesInput.files[i]);
-      filesArray.push(fileData);
-    }
-
-    decryptedDocs.unshift({
-      id: Date.now(),
-      category,
-      title,
-      identifier,
-      expiry,
-      notes,
-      files: filesArray,
-      createdAt: new Date().toLocaleDateString('ms-MY')
-    });
-
-    const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
-    await setVaultPayload(encrypted);
-
-    document.getElementById('docTitle').value = '';
-    document.getElementById('docIdentifier').value = '';
-    document.getElementById('docExpiry').value = '';
-    document.getElementById('docNotes').value = '';
-    filesInput.value = '';
-
-    closeModal('addModal');
-    renderDocuments();
-  }
-
-  async function deleteDoc(id) {
-    if (!confirm("Padam kad/dokumen ini daripada memori telefon?")) return;
-    decryptedDocs = decryptedDocs.filter(d => d.id !== id);
-    delete activePreviewIndices[id];
-    const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
-    await setVaultPayload(encrypted);
-    renderDocuments();
-  }
-
-  function getCategoryTag(cat) {
-    if (cat.includes('IC')) return '<span class="cat-tag tag-ic">KAD PENGENALAN</span>';
-    if (cat.includes('Lesen')) return '<span class="cat-tag tag-license">LESEN MEMANDU</span>';
-    if (cat.includes('Kenderaan')) return '<span class="cat-tag tag-car">KENDERAAN</span>';
-    if (cat.includes('Bank')) return '<span class="cat-tag tag-bank">KAD BANK</span>';
-    return '<span class="cat-tag" style="background: rgba(255,255,255,0.1); color: #fff;">DOKUMEN</span>';
-  }
-
-  function getExpiryBadge(expDateStr) {
-    if (!expDateStr) return '';
-    const now = new Date();
-    const expDate = new Date(expDateStr);
-    const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return '<span class="expiry-tag exp-danger">⚠️ Telah Tamat</span>';
-    if (diffDays <= 30) return `<span class="expiry-tag exp-warning">⏳ Luput dlm ${diffDays} hari</span>`;
-    return `<span class="expiry-tag exp-safe">Luput: ${expDateStr}</span>`;
-  }
-
-  function switchActiveFile(docId, fileIndex) {
-    activePreviewIndices[docId] = fileIndex;
-    renderDocuments();
-  }
-
-  function renderDocuments() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    const list = document.getElementById('docsList');
-    list.innerHTML = '';
-
-    document.getElementById('totalDocsCounter').innerText = decryptedDocs.length;
-
-    const filtered = decryptedDocs.filter(d => {
-      const matchCat = currentFilterCategory === 'Semua' || d.category === currentFilterCategory;
-      const matchQ = d.title.toLowerCase().includes(query) || (d.identifier && d.identifier.toLowerCase().includes(query));
-      return matchCat && matchQ;
-    });
-
-    if (filtered.length === 0) {
-      list.innerHTML = `
-        <div style="text-align: center; padding: 3.5rem 1rem; color: var(--text-muted);">
-          <div style="font-size: 2.5rem; margin-bottom: 0.4rem;">🗂️</div>
-          <p style="font-size: 0.85rem;">Tiada dokumen dalam senarai kategori ini.</p>
-        </div>
-      `;
-      return;
-    }
-
-    filtered.forEach(item => {
-      const files = item.files || [];
-      const activeIdx = activePreviewIndices[item.id] || 0;
-      const currentFile = files[activeIdx] || files[0];
-      const isImg = currentFile && currentFile.type && currentFile.type.startsWith('image/');
-      const isPdf = currentFile && currentFile.type === 'application/pdf';
-
-      const card = document.createElement('div');
-      card.className = 'vault-card glass-box';
-      card.innerHTML = `
-        <div class="card-top-row">
-          <div style="display: flex; gap: 6px; align-items: center;">
-            ${getCategoryTag(item.category)}
-            ${getExpiryBadge(item.expiry)}
-          </div>
-          <button class="ghost-btn" style="color: var(--rose);" onclick="deleteDoc(${item.id})">Padam</button>
-        </div>
-
-        <div class="doc-main-title">${escapeHtml(item.title)}</div>
-
-        ${item.identifier ? `
-          <div class="id-number-bar" onclick="copyIdNumber('${escapeJs(item.identifier)}')">
-            <span>${escapeHtml(item.identifier)}</span>
-            <span style="font-size: 0.72rem; color: var(--accent);">📋 SALIN</span>
-          </div>
-        ` : ''}
-
-        ${currentFile ? `
-          <div class="preview-main-box" onclick="openPreview('${currentFile.dataUrl}', '${escapeJs(item.title)} - ${escapeJs(currentFile.name)}')">
-            <span class="file-counter-pill">Fail ${activeIdx + 1} / ${files.length}</span>
-            ${isImg ? `<img src="${currentFile.dataUrl}" alt="Preview">` : ''}
-            ${isPdf ? `
-              <div style="text-align: center; padding: 1rem;">
-                <div style="font-size: 2.5rem;">📄</div>
-                <div style="font-size: 0.85rem; font-weight: 600; color: #fff; margin-top: 4px;">${escapeHtml(currentFile.name)}</div>
-                <div style="font-size: 0.72rem; color: var(--accent); margin-top: 2px;">Sentuh untuk baca PDF</div>
-              </div>` : ''}
-          </div>
-        ` : ''}
-
-        ${files.length > 1 ? `
-          <div class="thumb-scroll-row">
-            ${files.map((f, idx) => {
-              const thumbIsImg = f.type && f.type.startsWith('image/');
-              return thumbIsImg ? `
-                <img src="${f.dataUrl}" class="mini-thumb ${idx === activeIdx ? 'active' : ''}" onclick="switchActiveFile(${item.id}, ${idx})">
-              ` : `
-                <div class="mini-thumb-pdf ${idx === activeIdx ? 'active' : ''}" onclick="switchActiveFile(${item.id}, ${idx})">📄</div>
-              `;
-            }).join('')}
-          </div>
-        ` : ''}
-
-        ${item.notes ? `<p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem; margin-top: 0.4rem; line-height: 1.4;">${escapeHtml(item.notes)}</p>` : ''}
-
-        <div class="card-footer">
-          <span style="font-size: 0.75rem; color: var(--text-muted);">${item.createdAt} (${files.length} Fail)</span>
-          ${currentFile ? `
-            <a class="ghost-btn" href="${currentFile.dataUrl}" download="${currentFile.name || 'document'}">
-              ⬇️ Muat Turun Fail
-            </a>
-          ` : ''}
-        </div>
-      `;
-      list.appendChild(card);
-    });
-  }
-
-  function openPreview(url, title) {
-    document.getElementById('viewTitle').innerText = title;
-    const body = document.getElementById('viewBody');
-    if (url.startsWith('data:image/')) {
-      body.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 14px;">`;
-    } else {
-      body.innerHTML = `<iframe src="${url}" style="width: 100%; height: 100%; border: none; border-radius: 14px;"></iframe>`;
-    }
-    openModal('viewModal');
-  }
-
-  function copyIdNumber(txt) {
-    navigator.clipboard.writeText(txt);
-    if (navigator.vibrate) navigator.vibrate(50);
-    alert("Nombor ID disalin!");
-  }
-
-  function openModal(id) { document.getElementById(id).classList.add('active'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-  function closeOnBackdrop(e, id) { if (e.target.id === id) closeModal(id); }
-
-  function setCategoryFilter(cat, elem) {
-    currentFilterCategory = cat;
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    elem.classList.add('active');
-    renderDocuments();
-  }
-
-  async function exportVaultBackup() {
-    const raw = await getVaultPayload();
-    if (!raw) return alert("Tiada data untuk dieksport.");
-    const blob = new Blob([raw], { type: "application/json" });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `PocketVault-Backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-  }
-
-  function importVaultBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
       try {
-        const payload = e.target.result;
-        const decryptedStr = await decryptData(payload, sessionKey);
-        decryptedDocs = JSON.parse(decryptedStr);
-        await setVaultPayload(payload);
-        closeModal('settingsModal');
-        renderDocuments();
-        alert("Sandaran berjaya dipulihkan sepenuhnya!");
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "save", appName, username, encryptedPassword })
+        });
+
+        form.reset();
+        loadRecords();
       } catch (err) {
-        alert("Gagal memulihkan sandaran. Sila pastikan kata laluan sama.");
+        alert("Gagal menyimpan rekod: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan Rekod";
       }
-    };
-    reader.readAsText(file);
-  }
-
-  async function changeMasterPassword() {
-    const oldP = document.getElementById('oldPasswordInput').value;
-    const newP = document.getElementById('newPasswordChangeInput').value;
-    const confP = document.getElementById('confirmPasswordChangeInput').value;
-
-    if (oldP !== sessionKey) return alert("Master Password semasa tidak betul!");
-    if (!newP || newP.length < 4) return alert("Kata laluan baharu mestilah sekurang-kurangnya 4 aksara.");
-    if (newP !== confP) return alert("Kata laluan baharu tidak sepadan!");
-
-    sessionKey = newP;
-    const encrypted = await encryptData(JSON.stringify(decryptedDocs), sessionKey);
-    await setVaultPayload(encrypted);
-
-    document.getElementById('oldPasswordInput').value = '';
-    document.getElementById('newPasswordChangeInput').value = '';
-    document.getElementById('confirmPasswordChangeInput').value = '';
-
-    closeModal('settingsModal');
-    alert("Master Password berjaya ditukar!");
-  }
-
-  function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
-  function escapeJs(s) { return (s || '').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
-
-  window.addEventListener('DOMContentLoaded', checkInitialVaultStatus);
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').then((reg) => {
-        reg.onupdatefound = () => {
-          const installingWorker = reg.installing;
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              window.location.reload();
-            }
-          };
-        };
-      }).catch(console.error);
     });
-  }
-</script>
+
+    // Ambil & Papar Rekod
+    async function loadRecords() {
+      recordsContainer.innerHTML = `<p class="text-xs text-slate-500 italic">Mengambil data...</p>`;
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "list" })
+        });
+        const data = await res.json();
+
+        if (!data.records || data.records.length === 0) {
+          recordsContainer.innerHTML = `<p class="text-xs text-slate-500 italic">Tiada rekod disimpan.</p>`;
+          return;
+        }
+
+        renderList(data.records);
+      } catch (err) {
+        recordsContainer.innerHTML = `<p class="text-xs text-rose-400 italic">Ralat memuatkan rekod.</p>`;
+      }
+    }
+
+    function renderList(records) {
+      recordsContainer.innerHTML = "";
+      const masterKey = masterKeyInput.value.trim();
+
+      records.forEach(item => {
+        let displayPassword = "••••••••";
+        let isDecrypted = false;
+
+        if (masterKey) {
+          try {
+            const bytes = CryptoJS.AES.decrypt(item.encryptedPassword, masterKey);
+            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+            if (decrypted) {
+              displayPassword = decrypted;
+              isDecrypted = true;
+            }
+          } catch (_) {}
+        }
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-800/60 border border-slate-700/80 p-3 rounded-lg flex items-center justify-between";
+        card.innerHTML = `
+          <div class="space-y-1">
+            <p class="font-semibold text-sm text-slate-100">${escapeHtml(item.appName)}</p>
+            <p class="text-xs text-slate-400">ID: <span class="text-slate-300 font-mono">${escapeHtml(item.username)}</span></p>
+            <p class="text-xs text-slate-400">Pass: <span class="font-mono ${isDecrypted ? 'text-teal-300' : 'text-slate-500'}">${displayPassword}</span></p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="navigator.clipboard.writeText('${isDecrypted ? displayPassword : ''}')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[11px] text-slate-200">Salin</button>
+            <button onclick="deleteRecord('${item.id}')" class="px-2 py-1 bg-rose-950/60 border border-rose-900 text-rose-300 hover:bg-rose-900 rounded text-[11px]">Padam</button>
+          </div>
+        `;
+        recordsContainer.appendChild(card);
+      });
+    }
+
+    async function deleteRecord(id) {
+      if (!confirm("Padam rekod ini?")) return;
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "delete", id })
+      });
+      loadRecords();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    masterKeyInput.addEventListener('input', () => {
+      // Nyahsulit semula senarai sedia ada bila master key ditaip
+      loadRecords();
+    });
+
+    refreshBtn.addEventListener('click', loadRecords);
+    loadRecords();
+  </script>
 </body>
 </html>
